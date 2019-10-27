@@ -1,0 +1,67 @@
+@import "./reset.scss";
+
+.library {
+    margin: 0 auto;
+    width: 600px;
+}
+
+.book {
+    display: flex;
+    min-height: 40px;
+    
+    .remove-btn {
+        width: 40px;
+        display: inline-block;
+        background-position: center;
+        background-size: 40px;
+        background-repeat: no-repeat;
+        background-image: url('../img/delete.svg');
+    }
+
+    .add-btn {
+        width: 40px;
+        background-size: 25px;
+        display: inline-block;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-image: url('../img/add.svg');
+    }
+
+    .name {
+        font-weight: bold;
+    }
+}
+
+.book-edit {
+    margin: 10px 0;
+    border-bottom: 1px solid black;
+    padding-bottom: 5px;
+
+    label {
+        width: 100%;
+        display: block;
+
+        span {
+            width: 100px;
+            display: inline-block;
+        }
+
+        input, textarea {
+            width: 300px;
+        }
+    }
+
+    label + label {
+        margin-top: 10px;
+    }
+}
+
+.book + .book {
+    margin-top: 10px;
+}
+
+.touched {
+    :invalid {
+        outline: 1px solid red;
+    }
+}
