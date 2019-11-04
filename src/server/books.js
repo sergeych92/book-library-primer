@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import knex from 'knex';
-import multer from 'multer';
+const express = require('express');
+const knex = require('knex');
+const multer = require('multer');
 
-export const booksRouter = Router();
+const booksRouter = express.Router();
 
 let db = knex({
     debug: true,
@@ -16,32 +16,38 @@ let db = knex({
 });
 
 booksRouter.get('/', function (req, res) {
-    db().select('Id', 'BookName', 'BookDescr')
+    db().select('Id', 'BookName', 'BookDescr', 'BookCode')
         .from('Books')
         .then(response => {
             res.json({
                 books: response.map(row => ({
                     id: row.Id,
                     name: row.BookName,
-                    description: row.BookDescr
+                    description: row.BookDescr,
+                    code: row.BookCode
                 }))
             });
         })
 });
 
-const upload = multer();
-
-booksRouter.post('/', upload.none(), function (req, res) {
-    const {name, description} = req.body;
+// multer().none() is for form data
+booksRouter.post('/', multer().none(), function (req, res) {
+    const {name, description, code} = req.body;
     db('Books')
         .returning('Id')
         .insert({
             BookName: name,
-            BookDescr: description
+            BookDescr: description,
+            BookCode: code
         }).then(([id]) => {
             res.json({
                 ...req.body,
                 id
+            });
+        }).catch(error => {
+            res.json({
+                error: `There is a book already with the code ${code}`,
+                dbError: error
             });
         });
 });
@@ -57,3 +63,5 @@ booksRouter.delete('/', function (req, res) {
             });
         });
 });
+
+exports.booksRouter = booksRouter;

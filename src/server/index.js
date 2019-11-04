@@ -1,9 +1,9 @@
-import path from 'path';
-import express from 'express';
-import webpack from 'webpack';
-import webpackDevMiddleware from 'webpack-dev-middleware';
-import config from '../../webpack.config.js';
-import { booksRouter } from './books';
+const path = require('path');
+const express = require('express');
+const webpack = require('webpack');
+const webpackDevMiddleware = require('webpack-dev-middleware');
+const config = require('../../webpack.config.js');
+const books = require('./books');
 
 const app = express(),
             DIST_DIR = __dirname,
@@ -16,7 +16,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(express.json());
 
-app.use('/books', booksRouter);
+app.use('/books', books.booksRouter); // TODO: update usage
 
 app.get('*', (req, res, next) => {
     compiler.outputFileSystem.readFile(HTML_FILE, (err, result) => {

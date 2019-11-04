@@ -9,16 +9,20 @@ addBtnEl.addEventListener('click', e => {
     e.preventDefault();
     addForm.classList.add('touched');
     if (!addForm.checkValidity()) {
-        alert('Name and Description must be filled out');
+        alert('Name, Description, and Code must be filled out');
     } else {
         fetch('/books', {
             method: 'POST',
             body: new FormData(addForm)
         }).then(response => response.json())
         .then(result => {
-            renderBook(result);
-            clearUpForm(addForm);
-        })
+            if (!result.error) {
+                renderBook(result);
+                clearUpForm(addForm);
+            } else {
+                alert(`Couldn't add a book because ${result.error}`);
+            }
+        });
     }
 });
 
@@ -40,6 +44,6 @@ bookListEl.addEventListener('click', e => {
             } else {
                 alert('Could not remove the book, sorry');
             }
-        })
+        });
     }
 });
