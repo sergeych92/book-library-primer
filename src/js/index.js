@@ -1,5 +1,6 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
+import {typingStream, throttledStream} from './book-code-stream';
 
 loadRows();
 
@@ -47,3 +48,14 @@ bookListEl.addEventListener('click', e => {
         });
     }
 });
+
+(async () => {
+    const batchedStream = throttledStream(typingStream());
+    for await (let t of batchedStream) {
+        console.log(t);
+    }
+
+//     let req = await fetch(`/books/codeExists/${code}`);
+//     let json = await req.json();
+//     e.target.setCustomValidity(json.exists ? 'The code already exists' : '');
+})()
