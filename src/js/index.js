@@ -9,9 +9,9 @@ addBtnEl.addEventListener('click', e => {
     e.preventDefault();
     addForm.classList.add('touched');
     if (!addForm.checkValidity()) {
-        alert('Name, Description, and Code must be filled out');
+        alert('Name, Description, and Code must be filled out. Code must be unique');
     } else {
-        fetch('/books', {
+        fetch('/books/book', {
             method: 'POST',
             body: new FormData(addForm)
         }).then(response => response.json())
@@ -31,7 +31,7 @@ bookListEl.addEventListener('click', e => {
     if (removeBtn.matches('.remove-btn')) {
         e.preventDefault();
         const id = parseInt(removeBtn.parentElement.dataset.id);
-        fetch('/books', {
+        fetch('/books/book', {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json;charset=utf-8'

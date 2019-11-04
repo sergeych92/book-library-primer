@@ -30,8 +30,20 @@ booksRouter.get('/', function (req, res) {
         })
 });
 
+booksRouter.get('/codeExists/:code', function (req, res) {
+    const code = req.params.code;
+    db().select('Id')
+        .from('Books')
+        .where('BookCode', code)
+        .then(dbRows => {
+            res.json({
+                exists: dbRows.length > 0
+            });
+        });
+});
+
 // multer().none() is for form data
-booksRouter.post('/', multer().none(), function (req, res) {
+booksRouter.post('/book', multer().none(), function (req, res) {
     const {name, description, code} = req.body;
     db('Books')
         .returning('Id')
@@ -52,7 +64,7 @@ booksRouter.post('/', multer().none(), function (req, res) {
         });
 });
 
-booksRouter.delete('/', function (req, res) {
+booksRouter.delete('/book', function (req, res) {
     const {id} = req.body;
     db('Books')
         .where('id', id)
@@ -61,7 +73,12 @@ booksRouter.delete('/', function (req, res) {
             res.json({
                 wasRemoved: count === 1
             });
+        }).catch(error => {
+            res.json({
+                error: `Couldn't delete the book with the id=${id}`,
+                dbError: error
+            });
         });
 });
 
-exports.booksRouter = booksRouter;
+module.exports = booksRouter;
