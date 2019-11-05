@@ -4,7 +4,7 @@ create table Books (
     Id int not null auto_increment primary key,
     BookName varchar(50) not null,
     BookDescr varchar(200),
-    BookCode varchar(100) not null unique,
+    BookCode varchar(100) not null,
     constraint book_code_unique unique (BookCode)
 );
 

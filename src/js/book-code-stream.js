@@ -1,40 +1,79 @@
-export function* typingStream() {
-    const codeInputControl = document.querySelector('.library form input[name=code]');
-    let listener = null;
-    codeInputControl.addEventListener('input', e => {
-        if (listener) {
-            listener(e.target.value);
-            listener = null;
-        }
-    });
+export class EventStream {
+    static from(domEl) {
+        return new EventStream(domEl);
+    }
 
-    while (true) {
-        yield new Promise(resolve => {
-            listener = resolve;
-        });
+    constructor({domEl, eventName, eventValueReader}) {
+        this._domEl = domEl;
+        this._eventName = eventName;
+        this._eventValueReader = eventValueReader;
+        
+        this._running = true;
+        this._promiseResolve = null;
+        this._eventListener = null;
+    }
+
+    stop() {
+        if (this._running) {
+            this._running = false;
+            if (this._promiseResolve) {
+                this._promiseResolve(undefined);
+            }
+            if (this._eventListener) {
+                this._domEl.removeEventListener(this._eventName, this._eventListener);
+                this._eventListener = null;
+            }
+        }        
+    }
+
+    async *[Symbol.asyncIterator]() {
+        if (!this._running) {
+            return;
+        }
+
+        this._eventListener = e => {
+            if (this._promiseResolve) {
+                this._promiseResolve(this._eventValueReader(e));
+                this._promiseResolve = null;
+            }
+        };
+        this._domEl.addEventListener(this._eventName, this._eventListener);
+    
+        while (this._running) {
+            let nextValue = await new Promise(resolve => {
+                this._promiseResolve = resolve;
+            });
+            if (nextValue !== undefined) {
+                yield nextValue;
+            }
+        }
     }
 }
 
-export async function* throttledStream(keydownStream, timeout = 500) {
-    let upcomingValue = keydownStream.next();
-    while (true) {
-        let lastValue = await upcomingValue.value;
+export async function* throttleStream(eventStream, timeout = 500) {
+    const iterator = eventStream[Symbol.asyncIterator]();
+    let upcomingValue = iterator.next();
+    let lastValue = {done: false};
+    while (!lastValue.done) {
+        lastValue = await upcomingValue;
         upcomingValue = null;
-        while (true) {
+        while (!lastValue.done) {
             if (!upcomingValue) {
-                upcomingValue = keydownStream.next();
+                upcomingValue = iterator.next();
             }
-            let {late, nextValue} = await Promise.race([
+            let {late, nextValue, done} = await Promise.race([
                 new Promise(resolve => setTimeout(() => resolve({late: true}), timeout)),
-                upcomingValue.value.then(str => ({late: false, nextValue: str}))
+                upcomingValue.then(({value, done}) => ({late: false, nextValue: value, done}))
             ]);
-            if (late) {
-                break;
+            if (done || late) {
+                yield lastValue.value;
             } else {
-                lastValue = nextValue;
                 upcomingValue = null;
             }
+            if (late) {
+                break;
+            }
+            lastValue = {value: nextValue, done};
         }
-        yield lastValue;
     }
 }

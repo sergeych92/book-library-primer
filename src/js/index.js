@@ -1,6 +1,6 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-import {typingStream, throttledStream} from './book-code-stream';
+import {throttleStream, EventStream} from './book-code-stream';
 
 loadRows();
 
@@ -49,8 +49,21 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
+const typingStream = new EventStream({
+    domEl: document.querySelector('.library form input[name=code]'),
+    eventName: 'input',
+    eventValueReader: e => e.target.value
+});
+
 (async () => {
-    const batchedStream = throttledStream(typingStream());
+    // let iterator = typingStream[Symbol.asyncIterator]();
+    // let {value, done} = await iterator.next();
+    // while (!done) {
+    //     console.log(value);
+    //     ({value, done} = await iterator.next());
+    // }
+
+    const batchedStream = throttleStream(typingStream);
     for await (let t of batchedStream) {
         console.log(t);
     }
@@ -59,3 +72,7 @@ bookListEl.addEventListener('click', e => {
 //     let json = await req.json();
 //     e.target.setCustomValidity(json.exists ? 'The code already exists' : '');
 })()
+
+document.querySelector('button[name=cancel]').addEventListener('click', e => {
+    typingStream.stop();
+}, {once: true});
