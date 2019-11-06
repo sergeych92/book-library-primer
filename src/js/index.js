@@ -1,7 +1,9 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-import {throttleStream, EventStream} from './book-code-stream';
+import {EventStream} from './event-stream';
+import {throttleStream} from './throttle-stream';
 import { CodeControlValidator } from './code-control-validator';
+import { GetJsonRequest } from './get-json-request';
 
 loadRows();
 
@@ -50,25 +52,29 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
-let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
-
-// (async () => {
-//     // let iterator = typingStream[Symbol.asyncIterator]();
-//     // let {value, done} = await iterator.next();
-//     // while (!done) {
-//     //     console.log(value);
-//     //     ({value, done} = await iterator.next());
-//     // }
-
-//     const batchedStream = throttleStream(typingStream);
-//     for await (let t of batchedStream) {
-//         console.log(t);
-//     }
+// let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
 
 
-// })()
+(async () => {
+    const typingStream = new EventStream({
+        domEl: document.querySelector('.library .control:last-child .input'),
+        eventName: 'input',
+        eventValueReader: e => e.target.value
+    });
+
+    // for await (let code of typingStream) {
+        
+    // }
+
+    let pr = new GetJsonRequest(`/books/codeExists/potter`);
+    pr.then(({exists}) => {
+        console.log(`exists: ${exists}`);
+    });
+
+})()
 
 // document.querySelector('.cancel-btn').addEventListener('click', e => {
 //     e.preventDefault();
 //     typingStream.stop();
 // }, {once: true});
+//

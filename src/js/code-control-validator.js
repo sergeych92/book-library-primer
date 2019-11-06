@@ -1,4 +1,5 @@
-import {EventStream} from './book-code-stream';
+import {EventStream} from './event-stream';
+import {throttleStream} from './throttle-stream';
 
 export class CodeControlValidator {
     constructor(controlEl) {
