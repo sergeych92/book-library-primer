@@ -1,62 +1,111 @@
 @import "./reset.scss";
 
 .library {
-    margin: 0 auto;
+    margin: 20px auto;
     width: 600px;
 }
 
 .book {
     display: flex;
     min-height: 40px;
-    
-    .remove-btn {
-        width: 40px;
-        display: inline-block;
-        background-position: center;
-        background-size: 40px;
-        background-repeat: no-repeat;
-        background-image: url('../img/delete.svg');
-    }
-
-    .add-btn {
-        width: 40px;
-        background-size: 25px;
-        display: inline-block;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-image: url('../img/add.svg');
-    }
 
     .name {
         font-weight: bold;
     }
 }
 
+.remove-btn {
+    width: 40px;
+    display: inline-block;
+    background-position: center;
+    background-size: 40px;
+    background-repeat: no-repeat;
+    background-image: url('../img/delete.svg');
+}
+
+.add-btn {
+    width: 40px;
+    background-size: 25px;
+    display: inline-block;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../img/add.svg');
+}
+
+.cancel-btn {
+    width: 40px;
+    background-size: 25px;
+    display: inline-block;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../img/cancel.svg');
+}
+
 .book-edit {
     margin: 10px 0;
     border-bottom: 1px solid black;
     padding-bottom: 5px;
-
-    label {
-        width: 100%;
-        display: block;
-
-        span {
-            width: 100px;
-            display: inline-block;
-        }
-
-        input, textarea {
-            width: 300px;
-        }
-    }
-
-    label + label {
-        margin-top: 10px;
-    }
 }
 
 .book + .book {
+    margin-top: 10px;
+}
+
+.control {
+    position: relative;
+    width: 100%;
+    display: block;
+    padding: 3px 5px;
+
+    label {
+        width: 100px;
+        display: inline-block;
+    }
+
+    .input {
+        width: 300px;
+    }
+
+    textarea {
+        resize: none;
+    }
+}
+
+.control.invalid {
+    .input {
+        outline: 1px solid red;
+    }
+    .error {
+        display: flex;
+    }
+}
+
+.error {
+    height: 15px;
+    display: none;
+    align-items: center;
+    position: absolute;
+    width: 300px;
+    left: calc(100%);
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.triangle-left {
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right:10px solid red;
+}
+
+.message {
+    border: 1px solid red;
+    border-radius: 3px;
+    padding: 3px;
+}
+
+.control + .control {
     margin-top: 10px;
 }
 

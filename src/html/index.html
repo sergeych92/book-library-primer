@@ -9,20 +9,24 @@
     <div class="library">
         <div class="book book-edit">
             <a class="add-btn" href="#"></a>
-            <button name="cancel">Cancel</button>
+            <a class="cancel-btn" href="#"></a>
             <form novalidate>
-                <label>
-                    <span>Name</span>
-                    <input required name="name" class="name">
-                </label>
-                <label>
-                    <span>Description</span>
-                    <textarea required name="description" class="description"></textarea>
-                </label>
-                <label>
-                    <span>Code</span>
-                    <input required name="code" class="code">
-                </label>
+                <div class="control invalid">
+                    <label>Name</label>
+                    <input required name="name" class="name input">
+                    <div class="error">
+                        <div class="triangle-left"></div>
+                        <div class="message">Name must contain at least 1 character asdf as fas fas dfa sdfasdfasdf asfd asdfasdfas fs</div>
+                    </div>
+                </div>
+                <div class="control">
+                    <label>Description</label>
+                    <textarea required name="description" class="description input"></textarea>
+                </div>
+                <div class="control">
+                    <label>Code</label>
+                    <input required minlength="4" name="code" class="code input">
+                </div>
             </form>
         </div>
         <ul class="book-list">

@@ -1,6 +1,7 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
 import {throttleStream, EventStream} from './book-code-stream';
+import { CodeControlValidator } from './code-control-validator';
 
 loadRows();
 
@@ -49,30 +50,25 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
-const typingStream = new EventStream({
-    domEl: document.querySelector('.library form input[name=code]'),
-    eventName: 'input',
-    eventValueReader: e => e.target.value
-});
+let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
 
-(async () => {
-    // let iterator = typingStream[Symbol.asyncIterator]();
-    // let {value, done} = await iterator.next();
-    // while (!done) {
-    //     console.log(value);
-    //     ({value, done} = await iterator.next());
-    // }
+// (async () => {
+//     // let iterator = typingStream[Symbol.asyncIterator]();
+//     // let {value, done} = await iterator.next();
+//     // while (!done) {
+//     //     console.log(value);
+//     //     ({value, done} = await iterator.next());
+//     // }
 
-    const batchedStream = throttleStream(typingStream);
-    for await (let t of batchedStream) {
-        console.log(t);
-    }
+//     const batchedStream = throttleStream(typingStream);
+//     for await (let t of batchedStream) {
+//         console.log(t);
+//     }
 
-//     let req = await fetch(`/books/codeExists/${code}`);
-//     let json = await req.json();
-//     e.target.setCustomValidity(json.exists ? 'The code already exists' : '');
-})()
 
-document.querySelector('button[name=cancel]').addEventListener('click', e => {
-    typingStream.stop();
-}, {once: true});
+// })()
+
+// document.querySelector('.cancel-btn').addEventListener('click', e => {
+//     e.preventDefault();
+//     typingStream.stop();
+// }, {once: true});
