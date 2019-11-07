@@ -32,7 +32,8 @@ booksRouter.get('/', function (req, res) {
 
 booksRouter.get('/codeExists/:code', function (req, res) {
     const code = req.params.code;
-    db().select('Id')
+    setTimeout(() => { // add an artificial delay to simulate busy server and test request.abort()
+        db().select('Id')
         .from('Books')
         .where('BookCode', code)
         .then(dbRows => {
@@ -40,6 +41,7 @@ booksRouter.get('/codeExists/:code', function (req, res) {
                 exists: dbRows.length > 0
             });
         });
+    }, 2000);
 });
 
 // multer().none() is for form data

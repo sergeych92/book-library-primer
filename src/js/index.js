@@ -66,10 +66,24 @@ bookListEl.addEventListener('click', e => {
         
     // }
 
-    let pr = new GetJsonRequest(`/books/codeExists/potter`);
+    let pr = GetJsonRequest.from(`/books/codeExists/potter`);
+    // let pr = new Promise(resolve => {
+    //     setTimeout(() => {
+    //         resolve({exists: true});
+    //     }, 100);
+    // });
     pr.then(({exists}) => {
-        console.log(`exists: ${exists}`);
+        console.log(`request has arrived: ${exists}`);
+    }).catch(err => {
+        if (pr.wasCancelled) {
+            console.log(`request has been aborted. ${err}`);
+        }
     });
+
+    setTimeout(() => {
+        pr.cancel();
+        pr.cancel();
+    }, 500);
 
 })()
 

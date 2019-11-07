@@ -2,16 +2,17 @@ export class GetJsonRequest extends Promise {
 
     get wasCancelled() { return this._controller.signal.aborted; }
 
-    constructor(requestUrl) {
+    static from(requestUrl) {
         let controller = new AbortController();
-        super(function myFunc(resolve, reject) {
+        let request = new GetJsonRequest((resolve, reject) => {
             fetch(requestUrl, {
                 signal: controller.signal
             })
                 .then(r => r.json(), reject)
                 .then(resolve, reject);
         });
-        this._controller = controller;
+        request._controller = controller;
+        return request;
     }
 
     cancel() {
