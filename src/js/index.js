@@ -66,14 +66,11 @@ bookListEl.addEventListener('click', e => {
         
     // }
 
-    let pr = GetJsonRequest.from(`/books/codeExists/potter`);
-    // let pr = new Promise(resolve => {
-    //     setTimeout(() => {
-    //         resolve({exists: true});
-    //     }, 100);
-    // });
-    pr.then(({exists}) => {
+    let pr = new GetJsonRequest(`/books/codeExists/potter`)
+    .then(({exists}) => {
         console.log(`request has arrived: ${exists}`);
+    }).finally(() => {
+        console.log('finally');
     }).catch(err => {
         if (pr.wasCancelled) {
             console.log(`request has been aborted. ${err}`);
