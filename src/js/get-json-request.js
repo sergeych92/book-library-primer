@@ -1,30 +1,5 @@
 export class GetJsonRequest {
 
-    // get wasCancelled() { return this._controller.signal.aborted; }
-
-    // static from(requestUrl) {
-    //     let controller = new AbortController();
-    //     let request = new GetJsonRequest((resolve, reject) => {
-    //         fetch(requestUrl, {
-    //             signal: controller.signal
-    //         })
-    //             .then(r => r.json(), reject)
-    //             .then(resolve, reject);
-    //     });
-    //     request._controller = controller;
-    //     return request;
-    // }
-
-    // then(resolve, reject) {
-    //     let pr = super.then(resolve, reject);
-    //     pr._controller = this._controller;
-    //     return pr;
-    // }
-
-    // cancel() {
-    //     this._controller.abort();
-    // }
-
     get wasCancelled() { return this._controller.signal.aborted; }
 
     constructor(requestUrl) {

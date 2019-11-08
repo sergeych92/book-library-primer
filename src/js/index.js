@@ -4,6 +4,7 @@ import {EventStream} from './event-stream';
 import {throttleStream} from './throttle-stream';
 import { CodeControlValidator } from './code-control-validator';
 import { GetJsonRequest } from './get-json-request';
+import { switchMapStream } from './switch-map';
 
 loadRows();
 
@@ -54,7 +55,6 @@ bookListEl.addEventListener('click', e => {
 
 // let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
 
-
 (async () => {
     const typingStream = new EventStream({
         domEl: document.querySelector('.library .control:last-child .input'),
@@ -62,26 +62,12 @@ bookListEl.addEventListener('click', e => {
         eventValueReader: e => e.target.value
     });
 
-    // for await (let code of typingStream) {
-        
-    // }
-
-    let pr = new GetJsonRequest(`/books/codeExists/potter`)
-    .then(({exists}) => {
-        console.log(`request has arrived: ${exists}`);
-    }).finally(() => {
-        console.log('finally');
-    }).catch(err => {
-        if (pr.wasCancelled) {
-            console.log(`request has been aborted. ${err}`);
-        }
-    });
-
-    setTimeout(() => {
-        pr.cancel();
-        pr.cancel();
-    }, 500);
-
+    const existsStream = switchMapStream(
+        throttleStream(typingStream),
+        str => new GetJsonRequest(`/books/codeExists/${str}`));
+    for await (let response of existsStream) {
+        console.log(`exists: ${response.exists}`);
+    }
 })()
 
 // document.querySelector('.cancel-btn').addEventListener('click', e => {
