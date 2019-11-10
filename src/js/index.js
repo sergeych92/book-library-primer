@@ -55,23 +55,22 @@ bookListEl.addEventListener('click', e => {
 
 // let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
 
-(async () => {
-    const typingStream = new EventStream({
-        domEl: document.querySelector('.library .control:last-child .input'),
-        eventName: 'input',
-        eventValueReader: e => e.target.value
-    });
+const typingStream = new EventStream({
+    domEl: document.querySelector('.library .control:last-child .input'),
+    eventName: 'input',
+    eventValueReader: e => e.target.value
+});
 
+(async () => {
     const existsStream = switchMapStream(
         throttleStream(typingStream),
-        str => new GetJsonRequest(`/books/codeExists/${str}`));
+        str => str ? new GetJsonRequest(`/books/codeExists/${str}`) : Promise.resolve({exists: false}));
     for await (let response of existsStream) {
         console.log(`exists: ${response.exists}`);
     }
 })()
 
-// document.querySelector('.cancel-btn').addEventListener('click', e => {
-//     e.preventDefault();
-//     typingStream.stop();
-// }, {once: true});
-//
+document.querySelector('.cancel-btn').addEventListener('click', e => {
+    e.preventDefault();
+    typingStream.stop();
+}, {once: true});

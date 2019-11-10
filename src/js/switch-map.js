@@ -13,10 +13,11 @@ export async function* switchMapStream(stream, switchToMap) {
             if (!switchedTo) {
                 switchedTo = switchToMap(prevEventValue.value);
                 switchedTo = switchedTo.catch(err => {
-                    if (!switchedTo.wasCancelled()) {
+                    if (switchedTo.wasCancelled && switchedTo.wasCancelled()) {
+                        return {cancelled: true};
+                    } else {
                         throw err;
                     }
-                    return {cancelled: true};
                 });
             }
             let nextEvent = iterator.next();
@@ -30,7 +31,7 @@ export async function* switchMapStream(stream, switchToMap) {
             } else {
                 prevEvent = nextEvent;
                 if (switchLate) {
-                    switchedTo.cancel();
+                    switchedTo.cancel && switchedTo.cancel();
                     switchedTo = null;
                     prevEventValue = {value};
                 } else {
