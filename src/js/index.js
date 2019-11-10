@@ -1,10 +1,8 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-import {EventStream} from './event-stream';
-import {throttleStream} from './throttle-stream';
+import {EventStream} from './stream/event-stream';
 import { CodeControlValidator } from './code-control-validator';
 import { GetJsonRequest } from './get-json-request';
-import { switchMapStream } from './switch-map';
 
 loadRows();
 
@@ -62,13 +60,29 @@ const typingStream = new EventStream({
 });
 
 (async () => {
-    const existsStream = switchMapStream(
-        throttleStream(typingStream),
-        str => str ? new GetJsonRequest(`/books/codeExists/${str}`) : Promise.resolve({exists: false}));
-    for await (let response of existsStream) {
-        console.log(`exists: ${response.exists}`);
+    const piped = typingStream;
+        // .pipe()
+        // .throttle(300)
+        // .switchMap(str => str
+        //     ? new GetJsonRequest(`/books/codeExists/${str}`)
+        //     : Promise.resolve({exists: false}));
+            
+    for await (let v of piped) {
+        console.log(`I: ${v}`);
     }
-})()
+})();
+
+(async () => {
+    const piped = typingStream;
+        // .pipe()
+        // .switchMap(str => str
+        //     ? new GetJsonRequest(`/books/codeExists/${str}`)
+        //     : Promise.resolve({exists: false}));
+            
+    for await (let v of piped) {
+        console.log(`II: ${v}`);
+    }
+})();
 
 document.querySelector('.cancel-btn').addEventListener('click', e => {
     e.preventDefault();

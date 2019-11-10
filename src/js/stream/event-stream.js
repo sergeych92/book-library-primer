@@ -1,7 +1,6 @@
+import { StreamIterator } from "./stream-iterator";
+
 export class EventStream {
-    static from(domEl) {
-        return new EventStream(domEl);
-    }
 
     constructor({domEl, eventName, eventValueReader}) {
         this._domEl = domEl;
@@ -11,6 +10,10 @@ export class EventStream {
         this._running = true;
         this._promiseResolve = null;
         this._eventListener = null;
+    }
+
+    pipe() {
+        return new StreamIterator(this);
     }
 
     stop() {

@@ -41,7 +41,7 @@ booksRouter.get('/codeExists/:code', function (req, res) {
                 exists: dbRows.length > 0
             });
         });
-    }, 2000);
+    }, 1000);
 });
 
 // multer().none() is for form data
