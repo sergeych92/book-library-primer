@@ -1,13 +1,11 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-import {EventStream} from './stream/event-stream';
-import { GetJsonRequest } from './get-json-request';
-import { combineLatest } from './stream/combine-latest';
+import { FormValidator } from './form-validator';
 
 loadRows();
 
 const addForm = document.querySelector('.library form');
-const addBtnEl = document.querySelector('.add-btn');
+const addBtnEl = document.querySelector('.commit-btn');
 addBtnEl.addEventListener('click', e => {
     e.preventDefault();
     addForm.classList.add('touched');
@@ -51,41 +49,6 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
-// let codeControlValidator = new CodeControlValidator(document.querySelector('.library .control:last-child'));
-
-const typingStream = new EventStream({
-    domEl: document.querySelector('.library .control:last-child .input'),
-    eventName: 'input'
-});
-
-const clickStream = new EventStream({
-    domEl: document.querySelector('.cancel-btn'),
-    eventName: 'click',
-    preventDefault: true
-});
-
-(async () => {
-    const typingPipe = typingStream
-        .pipe()
-        .map(e => e.target.value)
-        .throttle(300)
-        .switchMap(str => str
-            ? new GetJsonRequest(`/books/codeExists/${str}`)
-            : Promise.resolve({exists: false}))
-        .map(({exists}) => exists);
-
-    let i = 1;
-    const counterPipe = clickStream
-        .pipe()
-        .map(e => i++);
-    const combined = combineLatest([typingPipe, counterPipe]);
-            
-    for await (let [exists, count] of combined) {
-        console.log(`exists: ${exists}, count: ${count}`);
-    }
-})();
-
-// document.querySelector('.cancel-btn').addEventListener('click', e => {
-//     e.preventDefault();
-//     typingStream.stop();
-// }, {once: true});
+const formValidator = new FormValidator(
+    document.querySelector('.book-edit')
+);
