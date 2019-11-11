@@ -1,5 +1,5 @@
 import {EventStream} from './stream/event-stream';
-import {throttleStream} from './stream/throttle-stream';
+import {throttleStream} from './stream/throttle';
 
 export class CodeControlValidator {
     constructor(controlEl) {

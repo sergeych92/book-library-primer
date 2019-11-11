@@ -1,5 +1,5 @@
 // switchToMap must return a cancellable promise (a promise that has cancel and wasCancelled functions)
-export async function* switchMapStream(stream, switchToMap) {
+export async function* switchMap(stream, switchMapTo) {
     const iterator = stream[Symbol.asyncIterator]();
     let prevEvent = null;
     let prevEventValue = {done: false};
@@ -11,7 +11,7 @@ export async function* switchMapStream(stream, switchToMap) {
         let switchedTo = null;
         while (!prevEventValue.done) {
             if (!switchedTo) {
-                switchedTo = switchToMap(prevEventValue.value);
+                switchedTo = switchMapTo(prevEventValue.value);
                 switchedTo = switchedTo.catch(err => {
                     if (switchedTo.wasCancelled && switchedTo.wasCancelled()) {
                         return {cancelled: true};

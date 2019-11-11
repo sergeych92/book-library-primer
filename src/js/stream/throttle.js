@@ -1,4 +1,4 @@
-export async function* throttleStream(eventStream, timeout) {
+export async function* throttle(eventStream, timeout) {
     const iterator = eventStream[Symbol.asyncIterator]();
     let upcomingValue = iterator.next();
     let lastValue = {done: false};

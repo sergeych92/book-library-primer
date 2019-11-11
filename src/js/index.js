@@ -1,8 +1,8 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
 import {EventStream} from './stream/event-stream';
-import { CodeControlValidator } from './code-control-validator';
 import { GetJsonRequest } from './get-json-request';
+import { combineLatest } from './stream/combine-latest';
 
 loadRows();
 
@@ -55,36 +55,37 @@ bookListEl.addEventListener('click', e => {
 
 const typingStream = new EventStream({
     domEl: document.querySelector('.library .control:last-child .input'),
-    eventName: 'input',
-    eventValueReader: e => e.target.value
+    eventName: 'input'
+});
+
+const clickStream = new EventStream({
+    domEl: document.querySelector('.cancel-btn'),
+    eventName: 'click',
+    preventDefault: true
 });
 
 (async () => {
-    const piped = typingStream
+    const typingPipe = typingStream
         .pipe()
+        .map(e => e.target.value)
         .throttle(300)
         .switchMap(str => str
             ? new GetJsonRequest(`/books/codeExists/${str}`)
-            : Promise.resolve({exists: false}));
-            
-    for await (let v of piped) {
-        console.log(`I: ${JSON.stringify(v)}`);
-    }
-})();
+            : Promise.resolve({exists: false}))
+        .map(({exists}) => exists);
 
-(async () => {
-    const piped = typingStream
+    let i = 1;
+    const counterPipe = clickStream
         .pipe()
-        .switchMap(str => str
-            ? new GetJsonRequest(`/books/codeExists/${str}`)
-            : Promise.resolve({exists: false}));
+        .map(e => i++);
+    const combined = combineLatest([typingPipe, counterPipe]);
             
-    for await (let v of piped) {
-        console.log(`II: ${JSON.stringify(v)}`);
+    for await (let [exists, count] of combined) {
+        console.log(`exists: ${exists}, count: ${count}`);
     }
 })();
 
-document.querySelector('.cancel-btn').addEventListener('click', e => {
-    e.preventDefault();
-    typingStream.stop();
-}, {once: true});
+// document.querySelector('.cancel-btn').addEventListener('click', e => {
+//     e.preventDefault();
+//     typingStream.stop();
+// }, {once: true});

@@ -1,11 +1,11 @@
-import { StreamIterator } from "./stream-iterator";
+import {StreamIterable} from "./stream-iterable";
 
 export class EventStream {
 
-    constructor({domEl, eventName, eventValueReader}) {
+    constructor({domEl, eventName, preventDefault}) {
         this._domEl = domEl;
         this._eventName = eventName;
-        this._eventValueReader = eventValueReader;
+        this._preventDefault = preventDefault;
         
         this._running = true;
         this._nextEventResolves = [];
@@ -13,7 +13,7 @@ export class EventStream {
     }
 
     pipe() {
-        return new StreamIterator(this);
+        return new StreamIterable(this);
     }
 
     stop() {
@@ -33,7 +33,12 @@ export class EventStream {
         }
 
         if (!this._eventListener) {
-            this._eventListener = e => this._resolveAllPromises(this._eventValueReader(e));
+            this._eventListener = e => {
+                this._resolveAllPromises(e);
+                if (this._preventDefault) {
+                    e.preventDefault();
+                }
+            };
             this._domEl.addEventListener(this._eventName, this._eventListener);
         }
     
