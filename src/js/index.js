@@ -60,27 +60,27 @@ const typingStream = new EventStream({
 });
 
 (async () => {
-    const piped = typingStream;
-        // .pipe()
-        // .throttle(300)
-        // .switchMap(str => str
-        //     ? new GetJsonRequest(`/books/codeExists/${str}`)
-        //     : Promise.resolve({exists: false}));
+    const piped = typingStream
+        .pipe()
+        .throttle(300)
+        .switchMap(str => str
+            ? new GetJsonRequest(`/books/codeExists/${str}`)
+            : Promise.resolve({exists: false}));
             
     for await (let v of piped) {
-        console.log(`I: ${v}`);
+        console.log(`I: ${JSON.stringify(v)}`);
     }
 })();
 
 (async () => {
-    const piped = typingStream;
-        // .pipe()
-        // .switchMap(str => str
-        //     ? new GetJsonRequest(`/books/codeExists/${str}`)
-        //     : Promise.resolve({exists: false}));
+    const piped = typingStream
+        .pipe()
+        .switchMap(str => str
+            ? new GetJsonRequest(`/books/codeExists/${str}`)
+            : Promise.resolve({exists: false}));
             
     for await (let v of piped) {
-        console.log(`II: ${v}`);
+        console.log(`II: ${JSON.stringify(v)}`);
     }
 })();
 

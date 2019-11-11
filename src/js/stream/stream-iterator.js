@@ -20,6 +20,10 @@ export class StreamIterator {
     }
 
     [Symbol.asyncIterator]() {
-        return this._stream;
+        if (this._stream[Symbol.asyncIterator]) {
+            return this._stream[Symbol.asyncIterator]();
+        } else {
+            return this._stream;
+        }
     }
 }
