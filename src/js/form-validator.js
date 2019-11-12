@@ -38,16 +38,22 @@ export class FormValidator {
     async _setUpStreams() {
         const nameValid = this._nameControl.getTypingStream()
             .pipe()
-            .map(e => e.target.checkValidity() ? '' : e.target.validationMessage);
+            .map(e => e.target)
+            .startWith(this._nameControl.inputEl)
+            .map(el => el.checkValidity() ? '' : el.validationMessage);
 
         const descriptionValid = this._descriptionControl.getTypingStream()
             .pipe()
-            .map(e => e.target.checkValidity() ? '' : e.target.validationMessage);
+            .map(e => e.target)
+            .startWith(this._descriptionControl.inputEl)
+            .map(el => el.checkValidity() ? '' : el.validationMessage);
 
         const codeExists = this._codeControl.getTypingStream()
             .pipe()
-            .map(e => e.target.value)
+            .map(e => e.target)
             .throttle(300)
+            .startWith(this._codeControl.inputEl)
+            .map(el => el.value)
             .switchMap(str => str
                 ? new GetJsonRequest(`/books/codeExists/${str}`)
                 : Promise.resolve({exists: false}))
@@ -55,21 +61,22 @@ export class FormValidator {
 
         const codeValid = this._codeControl.getTypingStream()
             .pipe()
-            .map(e => e.target.checkValidity() ? '' : e.target.validationMessage);
+            .map(e => e.target)
+            .startWith(this._codeControl.inputEl)
+            .map(el => el.checkValidity() ? '' : el.validationMessage);
 
         const combined = combineLatest([
             nameValid,
             descriptionValid,
-            codeValid,
-            codeExists
+            codeValid.combineLatest(codeExists).map(([valid, exists]) => valid || exists)
         ]);
 
-        for await (let [name, descr, code, exists] of combined) {
+        for await (let [name, descr, code] of combined) {
             this._validState = {
                 name,
                 descr,
-                code: code || exists,
-                valid: !name && !descr && !code && !exists
+                code: code,
+                valid: !name && !descr && !code
             };
 
             if (name) {
@@ -84,8 +91,8 @@ export class FormValidator {
                 this._descriptionControl.clearErrors();
             }
 
-            if (this._validState.code) {
-                this._codeControl.showError(this._validState.code);
+            if (code) {
+                this._codeControl.showError(code);
             } else {
                 this._codeControl.clearErrors();
             }

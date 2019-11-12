@@ -2,10 +2,12 @@ import { strToHtml } from "./str-to-html";
 import { EventStream } from "./stream/event-stream";
 
 export class InputRenderer {
+    get inputEl() { return this._inputEl; }
+
     constructor(inputEl) {
         this._inputEl = inputEl;
         this._wrapperEl = this._inputEl.parentElement;
-        this._hasError = false;
+        this._hasError = !!this._wrapperEl.querySelector('.error');
         this._typingStream = null;
 
         this._init();

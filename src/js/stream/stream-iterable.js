@@ -1,6 +1,8 @@
 import { throttle } from "./throttle";
 import { switchMap } from "./switch-map";
 import { mapStream } from "./map-stream";
+import { startWith } from "./start-with";
+import { combineLatest } from "./combine-latest";
 
 export class StreamIterable {
     throttle(timeout = 500) {
@@ -21,6 +23,20 @@ export class StreamIterable {
         return new StreamIterable
         (
             mapStream(this._stream, mapTo)
+        );
+    }
+
+    startWith(value) {
+        return new StreamIterable
+        (
+            startWith(this._stream, value)
+        );
+    }
+
+    combineLatest(...streams) {
+        return new StreamIterable
+        (
+            combineLatest([this._stream, ...streams])
         );
     }
 
