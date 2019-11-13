@@ -95,16 +95,12 @@ export class FormValidator {
             .pipe()
             .map(e => e.target)
             .startWith(this._codeControl.inputEl)
-            .tap(t => {
-                console.log(`value: ${t.value}`);
-            })
             .throttle(300)
             .map(el => el.value)
             .tap(_ => {
                 this._store.state = {
                     loading: true
                 };
-                console.log('loading: true');
             })
             .switchMap(str => str
                 ? new GetJsonRequest(`/books/codeExists/${str}`)
@@ -114,7 +110,6 @@ export class FormValidator {
                 this._store.state = {
                     loading: false
                 };
-                console.log('loading: false');
             });
 
         const codeValid = this._codeControl.typingStream
@@ -128,7 +123,6 @@ export class FormValidator {
             .map(([valid, exists]) => valid || exists);
 
         for await (let v of combined) {
-            console.log(v);
             this._store.state = {
                 code: v,
                 valid: !this._store.state.name && !this._store.state.descr && !v

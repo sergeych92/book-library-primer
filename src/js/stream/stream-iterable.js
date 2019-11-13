@@ -45,9 +45,6 @@ export class StreamIterable {
     }
 
     async *[Symbol.asyncIterator]() {
-        const stream = this._func.apply(undefined, this._params);
-        for await (let e of stream) {
-            yield e;
-        }
+        yield* this._func.apply(undefined, this._params);
     }
 }
