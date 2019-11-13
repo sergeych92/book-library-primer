@@ -1,7 +1,7 @@
 import { InputRenderer } from './input-renderer';
-import { combineLatest } from './stream/combine-latest';
 import { GetJsonRequest } from './get-json-request';
 import { EventStream } from './stream/event-stream';
+import { Subject } from './stream/subject';
 
 export class FormValidator {
     get submitStream() {
@@ -12,7 +12,7 @@ export class FormValidator {
                 preventDefault: true
             })
             .pipe()
-            .filter(_ => this._validState.valid && !this._validState.loading);
+            .filter(_ => this._store.state.valid && !this._store.state.loading);
         }
         return this._submitStream;
     }
@@ -24,81 +24,96 @@ export class FormValidator {
     constructor(formEl) {
         this._formEl = formEl;
 
-        this._validState = {
-            name: '',
-            descr: '',
-            code: '',
-            valid: false,
-            loading: false
-        };
-        this._setUpControls();
-        this._setUpStreams();
-        this._submitStream = null;
+        this._store = new Subject();
+        
+        this._setUpNameControl();
+        this._setUpUpDescriptionControl();
+        this._setUpCodeControl();
+        this._setUpCommitBtn();
+        this._setUpValidStoreUpdater();
+        this._subscribeDomUpdates();
+
+        this.reset();
     }
 
-    resetControls() {
+    reset() {
         this._nameControl.reset();
         this._descriptionControl.reset();
         this._codeControl.reset();
+        this._disableBtn();
 
-        this._validState = {
+        this._store.state = {
             name: '',
-            descr: '',
+            description: '',
             code: '',
             valid: false,
             loading: false
         };
     }
 
-    _setUpControls() {
+    async _setUpNameControl() {
         this._nameControl = new InputRenderer(
             this._formEl.querySelector('input[name=name]')
         );
-        this._descriptionControl = new InputRenderer(
-            this._formEl.querySelector('textarea[name=description]')
-        );
-        this._codeControl = new InputRenderer(
-            this._formEl.querySelector('input[name=code]')
-        );
-
-        this._nameControl.clearErrors();
-        this._descriptionControl.clearErrors();
-        this._codeControl.clearErrors();
-
-        this._commitBtn = this._formEl.querySelector('.add-btn');
-        this._disableBtn();
-    }
-
-    async _setUpStreams() {
         const nameValid = this._nameControl.typingStream
             .pipe()
             .map(e => e.target)
             .startWith(this._nameControl.inputEl)
             .map(el => el.checkValidity() ? '' : el.validationMessage);
+        
+        for await (let v of nameValid) {
+            this._store.state = {
+                name: v
+            };
+        }
+    }
 
+    async _setUpUpDescriptionControl() {
+        this._descriptionControl = new InputRenderer(
+            this._formEl.querySelector('textarea[name=description]')
+        );
         const descriptionValid = this._descriptionControl.typingStream
             .pipe()
             .map(e => e.target)
             .startWith(this._descriptionControl.inputEl)
             .map(el => el.checkValidity() ? '' : el.validationMessage);
+        
+        for await (let v of descriptionValid) {
+            this._store.state = {
+                description: v
+            };
+        }
+    }
+
+    async _setUpCodeControl() {
+        this._codeControl = new InputRenderer(
+            this._formEl.querySelector('input[name=code]')
+        );
 
         const codeExists = this._codeControl.typingStream
             .pipe()
             .map(e => e.target)
-            .throttle(300)
             .startWith(this._codeControl.inputEl)
+            .tap(t => {
+                console.log(`value: ${t.value}`);
+            })
+            .throttle(300)
             .map(el => el.value)
             .tap(_ => {
-                this._codeControl.showLoading();
-                this._validState.loading = true;
+                this._store.state = {
+                    loading: true
+                };
+                console.log('loading: true');
             })
             .switchMap(str => str
                 ? new GetJsonRequest(`/books/codeExists/${str}`)
                 : Promise.resolve({exists: false}))
             .map(({exists}) => exists ? 'This book code already exists. Please choose a different one' : '')
             .tap(_ => {
-                this._codeControl.hideLoading();
-                this._validState.loading = false;
+                this._store.state = {
+                    loading: false
+                };
+                console.log('loading: false');
             });
 
         const codeValid = this._codeControl.typingStream
@@ -107,20 +122,34 @@ export class FormValidator {
             .startWith(this._codeControl.inputEl)
             .map(el => el.checkValidity() ? '' : el.validationMessage);
 
-        const combined = combineLatest([
-            nameValid,
-            descriptionValid,
-            codeValid.combineLatest(codeExists).map(([valid, exists]) => valid || exists)
-        ]);
+        const combined = codeValid
+            .combineLatest(codeExists)
+            .map(([valid, exists]) => valid || exists);
 
-        for await (let [name, descr, code] of combined) {
-            this._validState = {
-                name,
-                descr,
-                code: code,
-                valid: !name && !descr && !code,
-                loading: this._validState.loading
+        for await (let v of combined) {
+            console.log(v);
+            this._store.state = {
+                code: v
             };
+        }
+    }
+
+    _setUpCommitBtn() {
+        this._commitBtn = this._formEl.querySelector('.add-btn');
+        this._submitStream = null;
+    }
+
+    async _setUpValidStoreUpdater() {
+        for await (let v of this._store) {
+            this._store.state = {
+                valid: !v.name && !v.descr && !v.code
+            };
+        }
+    }
+
+    async _subscribeDomUpdates() {
+        for await (let state of this._store) {
+            let {name, descr, code, loading, valid} = state;
 
             if (name) {
                 this._nameControl.showError(name);
@@ -140,7 +169,13 @@ export class FormValidator {
                 this._codeControl.clearErrors();
             }
 
-            if (this._validState.valid && !this._validState.loading) {
+            if (loading) {
+                this._codeControl.showLoading();
+            } else {
+                this._codeControl.hideLoading();
+            }
+
+            if (valid && !loading) {
                 this._enableBtn();
             } else {
                 this._disableBtn();

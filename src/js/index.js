@@ -39,7 +39,7 @@ const formValidator = new FormValidator(
         
         if (!response.error) {
             renderBook(response);
-            formValidator.resetControls();
+            formValidator.reset();
         } else {
             alert(`Couldn't add a book because ${response.error}`);
         }
