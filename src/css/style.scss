@@ -71,8 +71,16 @@
     }
 }
 
-.control.invalid {
+.control.dirty {
     .input {
+        border: 1px solid green;
+        outline: 1px solid green;
+    } 
+}
+
+.control.dirty.invalid {
+    .input {
+        border: 1px solid red;
         outline: 1px solid red;
     }
     .error {
@@ -89,6 +97,18 @@
     left: calc(100%);
     top: 50%;
     transform: translateY(-50%);
+}
+
+.loading {
+    position: absolute;
+    top: 4px;
+    right: 17px;
+    width: 17px;
+    height: 17px;
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-image: url('../img/loading.svg');
 }
 
 .triangle-left {

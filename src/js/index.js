@@ -4,29 +4,6 @@ import { FormValidator } from './form-validator';
 
 loadRows();
 
-const addForm = document.querySelector('.library form');
-const addBtnEl = document.querySelector('.commit-btn');
-addBtnEl.addEventListener('click', e => {
-    e.preventDefault();
-    addForm.classList.add('touched');
-    if (!addForm.checkValidity()) {
-        alert('Name, Description, and Code must be filled out. Code must be unique');
-    } else {
-        fetch('/books/book', {
-            method: 'POST',
-            body: new FormData(addForm)
-        }).then(response => response.json())
-        .then(result => {
-            if (!result.error) {
-                renderBook(result);
-                clearUpForm(addForm);
-            } else {
-                alert(`Couldn't add a book because ${result.error}`);
-            }
-        });
-    }
-});
-
 bookListEl.addEventListener('click', e => {
     const removeBtn = e.target;
     if (removeBtn.matches('.remove-btn')) {
@@ -52,3 +29,19 @@ bookListEl.addEventListener('click', e => {
 const formValidator = new FormValidator(
     document.querySelector('.book-edit')
 );
+
+(async () => {
+    for await (let _ of formValidator.submitStream) {
+        const response = await fetch('/books/book', {
+            method: 'POST',
+            body: formValidator.formData
+        }).then(response => response.json())
+        
+        if (!response.error) {
+            renderBook(response);
+            formValidator.resetControls();
+        } else {
+            alert(`Couldn't add a book because ${response.error}`);
+        }
+    }
+})()
