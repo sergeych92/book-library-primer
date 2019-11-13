@@ -30,7 +30,6 @@ export class FormValidator {
         this._setUpUpDescriptionControl();
         this._setUpCodeControl();
         this._setUpCommitBtn();
-        this._setUpValidStoreUpdater();
         this._subscribeDomUpdates();
 
         this.reset();
@@ -44,7 +43,7 @@ export class FormValidator {
 
         this._store.state = {
             name: '',
-            description: '',
+            descr: '',
             code: '',
             valid: false,
             loading: false
@@ -63,7 +62,8 @@ export class FormValidator {
         
         for await (let v of nameValid) {
             this._store.state = {
-                name: v
+                name: v,
+                valid: !v && !this._store.state.descr && !this._store.state.code
             };
         }
     }
@@ -80,7 +80,8 @@ export class FormValidator {
         
         for await (let v of descriptionValid) {
             this._store.state = {
-                description: v
+                descr: v,
+                valid: !this._store.state.name && !v && !this._store.state.code
             };
         }
     }
@@ -129,7 +130,8 @@ export class FormValidator {
         for await (let v of combined) {
             console.log(v);
             this._store.state = {
-                code: v
+                code: v,
+                valid: !this._store.state.name && !this._store.state.descr && !v
             };
         }
     }
@@ -137,14 +139,6 @@ export class FormValidator {
     _setUpCommitBtn() {
         this._commitBtn = this._formEl.querySelector('.add-btn');
         this._submitStream = null;
-    }
-
-    async _setUpValidStoreUpdater() {
-        for await (let v of this._store) {
-            this._store.state = {
-                valid: !v.name && !v.descr && !v.code
-            };
-        }
     }
 
     async _subscribeDomUpdates() {

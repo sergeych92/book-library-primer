@@ -24,7 +24,7 @@ export class Subject {
     }
 
     pipe() {
-        return StreamIterable(this);
+        return new StreamIterable(x => x, this);
     }
 
     async *[Symbol.asyncIterator]() {

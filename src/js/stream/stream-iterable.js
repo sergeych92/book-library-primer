@@ -7,64 +7,47 @@ import { tap } from "./tap";
 import { filter } from "./filter";
 
 export class StreamIterable {
+    constructor(func, ...params) {
+        this._func = func;
+        this._params = params;
+    }
+
     pipe() {
         return this;
     }
 
     throttle(timeout = 500) {
-        return new StreamIterable
-        (
-            throttle(this._stream, timeout)
-        );
+        return new StreamIterable(throttle, this, timeout);
     }
 
     switchMap(switchMapTo) {
-        return new StreamIterable
-        (
-            switchMap(this._stream, switchMapTo)
-        );
+        return new StreamIterable(switchMap, this, switchMapTo);
     }
 
     map(mapTo) {
-        return new StreamIterable
-        (
-            mapStream(this._stream, mapTo)
-        );
+        return new StreamIterable(mapStream, this, mapTo);
     }
 
     startWith(value) {
-        return new StreamIterable
-        (
-            startWith(this._stream, value)
-        );
+        return new StreamIterable(startWith, this, value);
     }
 
     combineLatest(...streams) {
-        return new StreamIterable
-        (
-            combineLatest([this._stream, ...streams])
-        );
+        return new StreamIterable(combineLatest, [this, ...streams]);
     }
 
     tap(callback) {
-        return new StreamIterable
-        (
-            tap(this._stream, callback)
-        );
+        return new StreamIterable(tap, this, callback);
     }
 
     filter(filterFunc) {
-        return new StreamIterable
-        (
-            filter(this._stream, filterFunc)
-        );
+        return new StreamIterable(filter, this, filterFunc);
     }
 
-    constructor(stream) {
-        this._stream = stream;
-    }
-
-    [Symbol.asyncIterator]() {
-        return this._stream[Symbol.asyncIterator]();
+    async *[Symbol.asyncIterator]() {
+        const stream = this._func.apply(undefined, this._params);
+        for await (let e of stream) {
+            yield e;
+        }
     }
 }

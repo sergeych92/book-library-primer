@@ -64,10 +64,13 @@
 
     .input {
         width: 300px;
+        height: 1.5rem;
+        box-sizing: border-box;
     }
 
     textarea {
         resize: none;
+        height: 2rem !important;
     }
 }
 
@@ -101,7 +104,8 @@
 
 .loading {
     position: absolute;
-    top: 4px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 17px;
     width: 17px;
     height: 17px;

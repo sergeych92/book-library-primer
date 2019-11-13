@@ -13,7 +13,7 @@ export class EventStream {
     }
 
     pipe() {
-        return new StreamIterable(this);
+        return new StreamIterable(x => x, this);
     }
 
     stop() {
