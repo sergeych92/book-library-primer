@@ -1,3 +1,5 @@
+import { escapeHtml } from "./escape-html";
+
 export function strToHtml(strings, ...params) {
     const combined = strings.reduce((acc, current, index) => {
         const escapedValue = escapeHtml(params[index - 1] ? params[index - 1].toString() : '');
@@ -7,12 +9,3 @@ export function strToHtml(strings, ...params) {
     template.innerHTML = combined;
     return template.content;
 }
-
-function escapeHtml(unsafe) {
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
- }

@@ -1,4 +1,4 @@
-import { strToHtml } from "./str-to-html";
+import { strToHtml } from "./dom-renderer/str-to-html";
 import { EventStream } from "./stream/event-stream";
 
 export class InputRenderer {
