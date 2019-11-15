@@ -9,7 +9,7 @@ export class NameComponent {
         const element = renderDom`
             <div class="control ${dirtyClass}">
                 <label>Name</label>
-                <input required name="name" class="name input" *(input)=${onInput}>
+                <input required name="name" class="name input" (input)=${onInput}>
                 <div class="error" *if=${error}>
                     <div class="triangle-left"></div>
                     <div class="message">${error}</div>

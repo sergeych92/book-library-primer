@@ -1,11 +1,9 @@
-import { escapeHtml } from "./escape-html";
+import { parseDirectives } from "./directive-parser";
 
-export function renderDom(strings, ...params) {
-    const combined = strings.reduce((acc, current, index) => {
-        const escapedValue = escapeHtml(params[index - 1] ? params[index - 1].toString() : '');
-        return acc + escapedValue + current;
-    });
+export function renderDom(strings, ...variables) {
+    const {directives, html} = parseDirectives(strings, variables);
+    
     const template = document.createElement('template');
-    template.innerHTML = combined;
+    template.innerHTML = html;
     return template.content;
 }
