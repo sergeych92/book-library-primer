@@ -1,6 +1,8 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
 import { FormValidator } from './form-validator';
+import { NameComponent } from './components/name-component';
+import { Subject } from './stream/subject';
 
 loadRows();
 
@@ -44,4 +46,4 @@ const formValidator = new FormValidator(
             alert(`Couldn't add a book because ${response.error}`);
         }
     }
-})()
+})();

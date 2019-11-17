@@ -11,12 +11,14 @@ const DIR_MATCHER = {
     OUTPUT: /\((?<eventName>[\w\-]+)\)=$/i,
 
     // <div id="id" class="one ${value} three">
-    TAG_LEFT: /(?<tagName>[\w\-]+)="(?<tagValueLeft>[^"]*)$/i,
-    TAG_RIGHT: /^(?<tagValueRight>[^"]*)"/i,
+    ATTR_LEFT: /(?<attrName>[\w\-]+)="(?<attrValueLeft>[^"]*)$/i,
+    ATTR_RIGHT: /^(?<attrValueRight>[^"]*)"/i,
 
-    // <div><span>A</span>${value}<span>C</span></div>
-    ELEMENT: /<\/?(?:[\w-]+)[^<>]*\/?>$/i // could be more specific to distinguish <input />, <input>, <div>, </div>
-}
+    // <div><span>A</span>Hello!!123${value}<span>C</span></div>
+    ELEMENT_MID_END: /<\/?(?:[\w\-]+)[^<>]*\/?>[^<>]*$/i,
+    // ${value}Hello!!$<div id="one"></div>
+    ELEMENT_START: /^[^<>]*<(?:[\w\-]+)[^<>]*>/i
+};
 
 export function parseDirectives(strings, variables) {
     let id = 1;
@@ -24,51 +26,64 @@ export function parseDirectives(strings, variables) {
 
     const html = strings.reduce((left, right, index) => {
         let match = null;
+        const variable = variables[index - 1];
+        const isObservable = variable instanceof StreamIterable;
 
         if (match = left.match(DIR_MATCHER.IF)) {
             directives.push({
                 id,
-                type: DIR_TYPE.IF,
-                variable: variables[index - 1]
+                variable,
+                isObservable,
+                type: DIR_TYPE.IF
             });
             return left.substring(0, match.index - 1) + `${DIR_ID_TAG_NAME}="${id++}"` + right;
         } else if (match = left.match(DIR_MATCHER.OUTPUT)) {
+            if (typeof variable !== 'function') {
+                throw new Error('Event listeners must be functions.');
+            }
             directives.push({
                 id,
+                variable,
                 type: DIR_TYPE.OUTPUT,
                 eventName: match.groups.eventName,
-                variable: variables[index - 1]
             });
             return left.substring(0, match.index - 1) + `${DIR_ID_TAG_NAME}="${id++}"` + right;
-        } else if (match = left.match(DIR_MATCHER.TAG_LEFT)) {
-            const matchRight = right.match(DIR_MATCHER.TAG_RIGHT);
+        } else if (match = left.match(DIR_MATCHER.ATTR_LEFT)) {
+            const matchRight = right.match(DIR_MATCHER.ATTR_RIGHT);
             if (!matchRight) {
                 throw new Error('there is no closing " for the tag value to be complete.');
             }
-            directives.push({
-                id,
-                type: DIR_TYPE.TAG,
-                variable: variables[index - 1],
-                tagName: match.groups.tagName,
-                tagValue: match.groups.tagValueLeft + matchRight.groups.tagValueRight
-            });
-            return left.substring(0, match.index - 1)
-                + `${DIR_ID_TAG_NAME}="${id++}"`
-                + right.substring(matchRight.groups.tagValueRight.length);
-        } else if (match = left.match(DIR_MATCHER.ELEMENT)) {
-            directives.push({
-                id,
-                type: DIR_TYPE.ELEMENT,
-                variable: variables[index - 1]
-            });
-            return left + `<span>${DIR_ID_TAG_NAME}="${id++}"</span>` + right;
+            if (isObservable) {
+                directives.push({
+                    id,
+                    variable,
+                    type: DIR_TYPE.ATTR,
+                    attrName: match.groups.attrName,
+                    attrValueLeft: match.groups.attrValueLeft,
+                    attrValueRight: matchRight.groups.attrValueRight
+                });
+                return left.substring(0, match.index - 1)
+                    + `${DIR_ID_TAG_NAME}="${id++}"`
+                    + right.substring(matchRight.groups.attrValueRight.length);
+            } else {
+                return left + escapeHtml(variable) + right;
+            }
+        } else if (match = (left.match(DIR_MATCHER.ELEMENT_MID_END) || right.match(DIR_MATCHER.ELEMENT_START))) {
+            if (isObservable) {
+                directives.push({
+                    id,
+                    variable,
+                    type: DIR_TYPE.ELEMENT
+                });
+                return left + `<span ${DIR_ID_TAG_NAME}="${id++}"></span>` + right;
+            } else {
+                return left + escapeHtml(variable) + right;
+            }
         } else { // normal text without variables
-            const variable = variables[index - 1];
-            if (variable instanceof StreamIterable) {
+            if (isObservable) {
                 throw new Error('Observables are not supported at the specified position');
             }
-            const escapedValue = escapeHtml(variables[index - 1] ? variables[index - 1].toString() : '');
-            return left + escapedValue + right;
+            return left + escapeHtml(variable) + right;
         }
     });
 

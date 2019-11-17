@@ -1,7 +1,7 @@
 export const DIR_TYPE = {
     IF: 'IF',
     OUTPUT: 'OUTPUT',
-    TAG: 'TAG',
+    ATTR: 'ATTR',
     ELEMENT: 'ELEMENT'
 };
 

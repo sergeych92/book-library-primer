@@ -1,4 +1,5 @@
 export function escapeHtml(unsafe) {
+    unsafe = unsafe ? unsafe.toString() : '';
     return unsafe
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
