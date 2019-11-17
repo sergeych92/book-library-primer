@@ -2,6 +2,10 @@ import {StreamIterable} from "./stream-iterable";
 
 export class EventStream {
 
+    set preventDefault(v) {
+        this._preventDefault = !!v;
+    }
+
     constructor({domEl, eventName, preventDefault}) {
         this._domEl = domEl;
         this._eventName = eventName;

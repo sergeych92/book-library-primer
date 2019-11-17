@@ -1,9 +1,13 @@
 import { DIR_TYPE, DIR_ID_TAG_NAME } from "./constants";
+import { EventStream } from "../stream/event-stream";
 
 function attachOutputDirective(element, directive) {
-    element.addEventListener(directive.eventName, e => {
-        directive.variable.call(e, e);
+    let outputStream = new EventStream({
+        domEl: element,
+        eventName: directive.eventName
     });
+
+    directive.variable.call(undefined, outputStream);
 }
 
 async function attachAttrDirective(element, directive) {
