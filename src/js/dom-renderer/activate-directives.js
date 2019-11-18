@@ -1,4 +1,4 @@
-import { DIR_TYPE, DIR_ID_TAG_NAME } from "./constants";
+import { DIR_TYPE, getIdAttrCode, DIR_ID_ATTR_NAME } from "./constants";
 import { EventStream } from "../stream/event-stream";
 
 function attachOutputDirective(element, directive) {
@@ -7,48 +7,58 @@ function attachOutputDirective(element, directive) {
         eventName: directive.eventName
     });
 
-    directive.variable.call(undefined, outputStream);
+    directive.variable.call(element, outputStream, element);
 }
 
 async function attachAttrDirective(element, directive) {
-    element.setAttribute(directive.attrValueLeft + directive.attrValueRight);
+    element.setAttribute(directive.attrName, directive.attrValueLeft + directive.attrValueRight);
     for await (let event of directive.variable) {
-        element.setAttribute(directive.attrValueLeft + event + directive.attrValueRight);
+        element.setAttribute(directive.attrName, directive.attrValueLeft + event + directive.attrValueRight);
     }
 }
 
 async function attachElementDirective(element, directive) {
-    for await (let event of directive.variable) {
-        element.textContent = event;
+    if (directive.isNode) {
+        element.replaceWith(directive.variable);
+    } else {
+        for await (let event of directive.variable) {
+            element.textContent = event;
+        }
     }
 }
 
 async function attachIfDirective(element, directive) {
-    let detachedEl = new Comment('if');
-    let attachedEl = element;
-    let swapEls = () => {
-        let buffer = attachedEl;
-        attachedEl = detachedEl;
-        detachedEl = buffer;
-    };
-    let shown = true;
-    for await (let event of directive.variable) {
-        const nextShown = !!event;
-        if (shown !== nextShown) {
-            attachedEl.replaceWith(detachedEl);
-            swapEls();
-            shown = nextShown;
+    if (directive.isObservable) {
+        let detachedEl = new Comment('if');
+        let attachedEl = element;
+        let swapEls = () => {
+            let buffer = attachedEl;
+            attachedEl = detachedEl;
+            detachedEl = buffer;
+        };
+        let shown = true;
+        for await (let event of directive.variable) {
+            const nextShown = !!event;
+            if (shown !== nextShown) {
+                attachedEl.replaceWith(detachedEl);
+                swapEls();
+                shown = nextShown;
+            }
+        }
+    } else {
+        if (!directive.variable) {
+            element.remove();
         }
     }
 }
 
 export function activateDirectives(rootEl, directives) {
     for (let dir of directives) {
-        const element = rootEl.querySelector(`[${DIR_ID_TAG_NAME}="${dir.id}"]`);
+        const element = rootEl.querySelector(`[${getIdAttrCode(dir.id, false)}]`);
         if (!element) {
             throw new Error('Parsing error. Cannot find an element by tag id');
         }
-        element.removeAttribute(DIR_ID_TAG_NAME);
+        element.removeAttribute(`${DIR_ID_ATTR_NAME}-${dir.id}`);
 
         if (dir.type === DIR_TYPE.OUTPUT) {    
             attachOutputDirective(element, dir);

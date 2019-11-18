@@ -81,19 +81,16 @@
     } 
 }
 
-.control.dirty.invalid {
-    .input {
+.control.dirty {
+    .input.invalid {
         border: 1px solid red;
         outline: 1px solid red;
-    }
-    .error {
-        display: flex;
     }
 }
 
 .error {
     height: 15px;
-    display: none;
+    display: flex;
     align-items: center;
     position: absolute;
     width: 300px;

@@ -5,4 +5,12 @@ export const DIR_TYPE = {
     ELEMENT: 'ELEMENT'
 };
 
-export const DIR_ID_TAG_NAME = 'data-directive-id';
+export const DIR_ID_ATTR_NAME = 'data-directive-id';
+
+export function getIdAttrCode(id, space = true) {
+    if (space) {
+        return ` ${DIR_ID_ATTR_NAME}-${id}="true" `;
+    } else {
+        return `${DIR_ID_ATTR_NAME}-${id}="true"`;
+    }
+}

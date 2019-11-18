@@ -1,6 +1,6 @@
 import { escapeHtml } from "./escape-html";
 import { StreamIterable } from "../stream/stream-iterable";
-import { DIR_TYPE, DIR_ID_TAG_NAME } from "./constants";
+import { DIR_TYPE, getIdAttrCode } from "./constants";
 
 // Directive matcher
 const DIR_MATCHER = {
@@ -36,7 +36,7 @@ export function parseDirectives(strings, variables) {
                 isObservable,
                 type: DIR_TYPE.IF
             });
-            return left.substring(0, match.index - 1) + `${DIR_ID_TAG_NAME}="${id++}"` + right;
+            return left.substring(0, match.index - 1) + getIdAttrCode(id++) + right;
         } else if (match = left.match(DIR_MATCHER.OUTPUT)) {
             if (typeof variable !== 'function') {
                 throw new Error('Event listeners must be functions.');
@@ -47,7 +47,7 @@ export function parseDirectives(strings, variables) {
                 type: DIR_TYPE.OUTPUT,
                 eventName: match.groups.eventName,
             });
-            return left.substring(0, match.index - 1) + `${DIR_ID_TAG_NAME}="${id++}"` + right;
+            return left.substring(0, match.index - 1) + getIdAttrCode(id++) + right;
         } else if (match = left.match(DIR_MATCHER.ATTR_LEFT)) {
             const matchRight = right.match(DIR_MATCHER.ATTR_RIGHT);
             if (!matchRight) {
@@ -63,19 +63,25 @@ export function parseDirectives(strings, variables) {
                     attrValueRight: matchRight.groups.attrValueRight
                 });
                 return left.substring(0, match.index - 1)
-                    + `${DIR_ID_TAG_NAME}="${id++}"`
-                    + right.substring(matchRight.groups.attrValueRight.length);
+                    + getIdAttrCode(id++)
+                    + right.substring(matchRight.groups.attrValueRight.length + 1); // +1 is for "
             } else {
                 return left + escapeHtml(variable) + right;
             }
         } else if (match = (left.match(DIR_MATCHER.ELEMENT_MID_END) || right.match(DIR_MATCHER.ELEMENT_START))) {
-            if (isObservable) {
+            const isNode = variable instanceof Node;
+            if (isNode && isObservable) {
+                throw new Error('Dom elements generated from observables are not supported.');
+            }
+            if (isObservable || isNode) {
                 directives.push({
                     id,
                     variable,
-                    type: DIR_TYPE.ELEMENT
+                    type: DIR_TYPE.ELEMENT,
+                    isObservable,
+                    isNode
                 });
-                return left + `<span ${DIR_ID_TAG_NAME}="${id++}"></span>` + right;
+                return left + `<span ${getIdAttrCode(id++, false)}></span>` + right;
             } else {
                 return left + escapeHtml(variable) + right;
             }

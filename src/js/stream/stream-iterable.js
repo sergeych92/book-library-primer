@@ -5,6 +5,7 @@ import { startWith } from "./start-with";
 import { combineLatest } from "./combine-latest";
 import { tap } from "./tap";
 import { filter } from "./filter";
+import { withLatestFrom } from "./with-latest-from";
 
 export class StreamIterable {
     constructor(func, ...params) {
@@ -42,6 +43,10 @@ export class StreamIterable {
 
     filter(filterFunc) {
         return new StreamIterable(filter, this, filterFunc);
+    }
+
+    withLatestFrom(...streams) {
+        return new StreamIterable(withLatestFrom, this, streams);
     }
 
     async *[Symbol.asyncIterator]() {

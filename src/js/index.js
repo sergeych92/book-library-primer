@@ -3,6 +3,7 @@ import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './boo
 import { FormValidator } from './form-validator';
 import { NameComponent } from './components/name-component';
 import { Subject } from './stream/subject';
+import { FormComponent } from './components/form-component';
 
 loadRows();
 
@@ -28,22 +29,30 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
-const formValidator = new FormValidator(
-    document.querySelector('.book-edit')
-);
+// const formValidator = new FormValidator(
+//     document.querySelector('.book-edit')
+// );
 
-(async () => {
-    for await (let _ of formValidator.submitStream) {
-        const response = await fetch('/books/book', {
-            method: 'POST',
-            body: formValidator.formData
-        }).then(response => response.json())
+// (async () => {
+//     for await (let _ of formValidator.submitStream) {
+//         const response = await fetch('/books/book', {
+//             method: 'POST',
+//             body: formValidator.formData
+//         }).then(response => response.json())
         
-        if (!response.error) {
-            renderBook(response);
-            formValidator.reset();
-        } else {
-            alert(`Couldn't add a book because ${response.error}`);
-        }
-    }
+//         if (!response.error) {
+//             renderBook(response);
+//             formValidator.reset();
+//         } else {
+//             alert(`Couldn't add a book because ${response.error}`);
+//         }
+//     }
+// })();
+
+(function () {
+    const formComponent = new FormComponent();
+    formComponent.bind();
+    document.querySelector('.library').prepend(
+        formComponent.element
+    );
 })();

@@ -1,17 +1,27 @@
-import { renderDom } from "../dom-renderer/render-dom";
+import { toDom } from "../dom-renderer/to-dom";
 
 export class NameComponent {
-    bind({loading, error}) {
-        const inputChange;
-        const registerOnInit = s => {
-            inputChange = s;
-            s.preventDefault(true);
+    get element() { return this._element; }
+    get inputChange() { return this._inputChange; }
+
+    constructor() {
+        this._element = null;
+        this._inputChange = null;
+    }
+
+    bind({loading, error, pristine}) {
+        const inputInvalidClass = error.pipe().map(e => !!e ? 'invalid' : '');
+        const controlPristineClass = pristine.pipe().map(t => t ? 'pristine' : 'dirty');
+        
+        const registerOnInput = (stream, el) => {
+            stream.preventDefault = true;
+            this._inputChange = stream.pipe().map(e => e.target).startWith(el);
         };
-        const dirtyClass = 'invalid';
-        const element = renderDom`
-            <div class="control ${dirtyClass}">
+
+        this._element = toDom`
+            <div class="control ${controlPristineClass}">
                 <label>Name</label>
-                <input required name="name" class="name input" (input)=${registerOnInput}>
+                <input required name="name" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
                 <div class="error" *if=${error}>
                     <div class="triangle-left"></div>
                     <div class="message">${error}</div>
@@ -19,6 +29,9 @@ export class NameComponent {
                 <div class="loading" *if=${loading}></div>
             </div>`;
 
-        return {element, inputChange};
+        return {
+            element: this._element,
+            inputChange: this._inputChange
+        };
     }
 }
