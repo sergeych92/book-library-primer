@@ -49,10 +49,14 @@ bookListEl.addEventListener('click', e => {
 //     }
 // })();
 
-(function () {
+(async function () {
     const formComponent = new FormComponent();
     formComponent.bind();
     document.querySelector('.library').prepend(
         formComponent.element
     );
+
+    for await (let click of formComponent.submitStream) {
+        console.log(click);
+    }
 })();

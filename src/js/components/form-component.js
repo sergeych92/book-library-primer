@@ -30,11 +30,11 @@ export class FormComponent {
 
         const registerOnClick = e => {
             e.preventDefault = true;
-            this._submitStream = e;
-                // .pipe()
-                // .withLatestFrom(this._formValidStream)
-                // .filter(([submit, valid]) => valid)
-                // .map(([submit, valid]) => submit);
+            this._submitStream = e
+                .pipe()
+                .withLatestFrom(this._formValidStream)
+                .filter(([_, valid]) => valid)
+                .map(([submit]) => submit);
         }
         const btnTypeStream = this._formValidStream.map(v => v ? 'add-btn' : 'cancel-btn');
 
@@ -59,7 +59,7 @@ export class FormComponent {
     }
 
     async _bindNameComponent() {
-        const nameObs = this._store.pipe().map(s => s.name).tap(e => console.log(e));
+        const nameObs = this._store.pipe().map(s => s.name);
         this._nameComponent.bind({
             loading: false,
             error: nameObs.map(s => s.error),
@@ -72,7 +72,6 @@ export class FormComponent {
 
         let eventCount = 0;
         for await (let error of errorStream) {
-            console.log('error stream: ' + error);
             let nameState = {};
             eventCount++;
             if (eventCount >= 2) {

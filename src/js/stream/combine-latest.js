@@ -1,3 +1,18 @@
+async function nextValue(iteratorArr, promiseArr, valueArr, infinitePromise) {
+    const fastest = await Promise.race(promiseArr);
+    if (fastest.done) {
+        valueArr[fastest.index].done = true;
+        valueArr[fastest.index].init = true;
+        promiseArr[fastest.index] = infinitePromise;
+    } else {
+        valueArr[fastest.index] = fastest;
+        promiseArr[fastest.index] =
+            iteratorArr[fastest.index]
+                .next()
+                .then(v => ({...v, index: fastest.index, init: true}));
+    }
+}
+
 export async function* combineLatest(streamArr) {
     if (!Array.isArray(streamArr)) {
         throw new Error('streamArr must be an array of streams');
@@ -7,27 +22,20 @@ export async function* combineLatest(streamArr) {
     }
 
     const infinitePromise = new Promise(_ => {});
-    const iteratorVector = streamArr.map(s => s[Symbol.asyncIterator]());
-    let valueVector = await Promise.all(
-        iteratorVector.map(iter => iter.next())
-    );
-    if (valueVector.every(({done}) => !done)) {
-        yield valueVector.map(({value}) => value);
+    const iteratorArr = streamArr.map(s => s[Symbol.asyncIterator]());
+    const promiseArr = iteratorArr.map((iter, index) =>
+        iter.next()
+            .then(v => ({...v, index, init: true})));
+    const valueArr = promiseArr.map((_, index) => ({value: undefined, done: false, init: false, index}));
 
-        const promiseVector = iteratorVector.map(
-            (iter, index) => iter.next().then(v => ({...v, index}))
-        );
-        while (valueVector.some(({done}) => !done)) {
-            const fastestValue = await Promise.race(promiseVector);
-            if (fastestValue.done) {
-                valueVector[fastestValue.index].done = true;
-                promiseVector[fastestValue.index] = infinitePromise;
-            } else {
-                valueVector[fastestValue.index].value = fastestValue.value;
-                yield valueVector.map(({value}) => value);
-                promiseVector[fastestValue.index] =
-                    iteratorVector[fastestValue.index].next().then(v => ({...v, index: fastestValue.index}));
-            }
-        }
+    while (valueArr.some(v => !v.init)) {
+        await nextValue(iteratorArr, promiseArr, valueArr, infinitePromise);
+    }
+    yield valueArr.map(v => v.value);
+
+    await nextValue(iteratorArr, promiseArr, valueArr, infinitePromise);
+    while ((valueArr.some(v => !v.done))) {
+        yield valueArr.map(v => v.value);
+        await nextValue(iteratorArr, promiseArr, valueArr, infinitePromise);
     }
 }
