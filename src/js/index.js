@@ -1,7 +1,7 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
 import { FormValidator } from './form-validator';
-import { NameComponent } from './components/name-component';
+import { NameComponent } from './components/input-component';
 import { Subject } from './stream/subject';
 import { FormComponent } from './components/form-component';
 

@@ -78,7 +78,11 @@
     .input {
         border: 1px solid green;
         outline: 1px solid green;
-    } 
+    }
+
+    .error {
+        display: flex;
+    }
 }
 
 .control.dirty {
@@ -90,7 +94,7 @@
 
 .error {
     height: 15px;
-    display: flex;
+    display: none;
     align-items: center;
     position: absolute;
     width: 300px;

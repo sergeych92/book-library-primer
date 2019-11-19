@@ -1,6 +1,6 @@
 import { toDom } from "../dom-renderer/to-dom";
 
-export class NameComponent {
+export class InputComponent {
     get element() { return this._element; }
     get inputChange() { return this._inputChange; }
 
@@ -9,8 +9,8 @@ export class NameComponent {
         this._inputChange = null;
     }
 
-    bind({loading, error, pristine}) {
-        const inputInvalidClass = error.pipe().map(e => !!e ? 'invalid' : '');
+    bind({loading, error, pristine, name, label}) {
+        const inputInvalidClass = error.pipe().map(e => e ? 'invalid' : '').filter(c => name === 'code').tap(c => console.log(`${name}: ${c}`));
         const controlPristineClass = pristine.pipe().map(t => t ? 'pristine' : 'dirty');
         
         const registerOnInput = (stream, el) => {
@@ -20,8 +20,8 @@ export class NameComponent {
 
         this._element = toDom`
             <div class="control ${controlPristineClass}">
-                <label>Name</label>
-                <input required name="name" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
+                <label>${label}</label>
+                <input required name="${name}" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
                 <div class="error" *if=${error}>
                     <div class="triangle-left"></div>
                     <div class="message">${error}</div>
