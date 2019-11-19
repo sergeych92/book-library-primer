@@ -49,14 +49,55 @@ bookListEl.addEventListener('click', e => {
 //     }
 // })();
 
-(async function () {
-    const formComponent = new FormComponent();
-    formComponent.bind();
-    document.querySelector('.library').prepend(
-        formComponent.element
-    );
+// (async function () {
+//     const formComponent = new FormComponent();
+//     formComponent.bind();
+//     document.querySelector('.library').prepend(
+//         formComponent.element
+//     );
 
-    for await (let click of formComponent.submitStream) {
-        console.log(click);
-    }
+//     for await (let click of formComponent.submitStream) {
+//         console.log(click);
+//     }
+// })();
+
+(async function () {
+    let subject = new Subject({
+        name: 'hello',
+        code: 'hi'
+    });
+
+    const startPipe = subject.pipe().throttle();
+
+    const decode = startPipe.pipe().map(c => c.name === 'hello' ? 'greeting' : 'farewell');
+    const codeUpper = startPipe;
+
+    setTimeout(function() {
+        subject.state = {
+            name: 'goodbay',
+            code: 'see you'
+        };
+        setTimeout(function() {
+            subject.state = {
+                name: 'hello',
+                code: 'hi there'
+            };
+        }, 3000);
+    }, 3000);
+
+    
+    (async function() {
+        for await (let {code} of codeUpper) {
+            console.log(`code: ${code}`);
+        }
+    })();
+    (async function() {
+        for await (let type of decode) {
+            console.log(`type: ${type}`);
+        }
+    })();
+
+    // for await (let [type, upper] of decode.combineLatest(codeUpper)) {
+    //     console.log(`type: ${type}, upper: ${upper}`);
+    // }
 })();
