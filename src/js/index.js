@@ -114,43 +114,33 @@ function waitClick(good = true) {
     });
 }
 
-// async function* generate() {
-//     let i = 1;
-//     while (true) {
-//         await wait();
-//         yield i++;
-//     }
-// }
-
-// (async function () {
-//     // Listener
-//     for await (let i of generate()) {
-//         console.log(i);
-//     }
-// })();
-
-// function allocateMemory(fillWith) {
-//     const size = 1e6;
-//     const arr = new Array(size);
-//     for (let i = 0; i < size; i++) {
-//         arr[i] = fillWith;
-//     }
-//     return arr;
-// }
-
-async function* createValueProducer() {
-    try {
-        await waitClick(true);
-        yield 1;
-
-        await waitClick(true);
-        yield 2;
-
-        await waitClick(true);
-        yield 3;
-    } finally {
-        console.log('finally in generator');
-    }
+function createClickListener() {
+    let stop = false;
+    return {
+        [Symbol.asyncIterator]() {
+            return this;
+        },
+        next() {
+            if (stop) {
+                return Promise.resolve({done: true});
+            } else {
+                return waitClick().then(value => ({
+                    value,
+                    done: false
+                }));
+            }
+        },
+        throw(err) {
+            stop = true;
+            console.log('about to throw an error!');
+            throw err;
+        },
+        return(value) {
+            stop = true;
+            console.log('I am out of here.')
+            return Promise.resolve({done: true, value});
+        }
+    };
 }
 
 async function forEach(stream, onEachFn, onErrorFn) {
@@ -161,7 +151,6 @@ async function forEach(stream, onEachFn, onErrorFn) {
     try {
         nextValue = await iterator.next();
     } catch (err) {
-        // iterator.return();
         onErrorFn(err);
         return;
     }
@@ -169,42 +158,56 @@ async function forEach(stream, onEachFn, onErrorFn) {
     while (!nextValue.done) {
         let onEachResult;
         try {
-            onEachResult = onEachFn.call(undefined, nextValue.value, index++);
+            onEachResult = onEachFn(nextValue.value, index++);
         } catch (err) {
             try {
-                iterator.throw(err);
+                await iterator.throw(err);
             } catch (iterErr) {
                 console.log('throw back: ' + iterErr);
+                onErrorFn(err);
             }
             break;
         }
 
         if (onEachResult !== undefined && !onEachResult) {
-            iterator.return();
+            await iterator.return();
             break;
         }
 
         try {
             nextValue = await iterator.next();
         } catch (err) {
-            // iterator.return();
             onErrorFn(err);
             break;
         }
     }
 }
 
-function onAllocateClick() {
-    const stream = createValueProducer();
+async function onAllocateClick() {
+    const stream = createClickListener();
+
     forEach(stream, (v, i) => {
-        if (i === 1) {
-            throw new Error('index is 1 error');
-        } else {
-            console.log(`for each at ${i}: ${v}`);
+        console.log(`for each at ${i}: ${v}`);
+        if (i === 2) {
+            throw new Error('at index 2');
         }
     }, err => {
         console.error(`for each: ${err}`);
     });
+
+    // try {
+    //     let i = 0;
+    //     for await (let v of stream) {
+    //         console.log(`for each at ${i}: ${v}`);
+    //         if (i++ === 1) {
+    //             throw new Error('at index 1');
+    //         }
+    //     }
+    // } catch (err) {
+    //     console.error(`for each: ${err}`);
+    // }
+
+    // console.log(stream.next());
 }
 
 document.querySelector('#allocate').addEventListener('click', onAllocateClick);
