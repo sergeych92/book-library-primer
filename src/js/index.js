@@ -160,13 +160,8 @@ async function forEach(stream, onEachFn, onErrorFn) {
         try {
             onEachResult = onEachFn(nextValue.value, index++);
         } catch (err) {
-            try {
-                await iterator.throw(err);
-            } catch (iterErr) {
-                console.log('throw back: ' + iterErr);
-                onErrorFn(err);
-            }
-            break;
+            await iterator.return();
+            throw err;
         }
 
         if (onEachResult !== undefined && !onEachResult) {
@@ -186,14 +181,18 @@ async function forEach(stream, onEachFn, onErrorFn) {
 async function onAllocateClick() {
     const stream = createClickListener();
 
-    forEach(stream, (v, i) => {
-        console.log(`for each at ${i}: ${v}`);
-        if (i === 2) {
-            throw new Error('at index 2');
-        }
-    }, err => {
-        console.error(`for each: ${err}`);
-    });
+    try {
+        await forEach(stream, (v, i) => {
+            console.log(`for each at ${i}: ${v}`);
+            if (i === 2) {
+                throw new Error('at index 2');
+            }
+        }, err => {
+            console.error(`on error: for each: ${err}`);
+        });
+    } catch (err) {
+        console.error(`catch: for each: ${err}`);
+    }
 
     // try {
     //     let i = 0;
