@@ -10,6 +10,7 @@ export async function* throttle(eventStream, timeout) {
                 upcomingValue = iterator.next();
             }
             let {late, nextValue, done} = await Promise.race([
+                // TODO: convert into a cancellable observable and cancel if there is a new value in time
                 new Promise(resolve => setTimeout(() => resolve({late: true}), timeout)),
                 upcomingValue.then(({value, done}) => ({late: false, nextValue: value, done}))
             ]);

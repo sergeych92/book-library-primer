@@ -1,33 +1,32 @@
-// import '../css/style.scss';
-// import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-// import { FormValidator } from './form-validator';
-// import { NameComponent } from './components/input-component';
-// import { Subject } from './stream/subject';
-// import { FormComponent } from './components/form-component';
+import '../css/style.scss';
+import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
+import { FormValidator } from './form-validator';
+import { FormComponent } from './components/form-component';
+import { Subject } from './stream/subject';
 
-// loadRows();
+loadRows();
 
-// bookListEl.addEventListener('click', e => {
-//     const removeBtn = e.target;
-//     if (removeBtn.matches('.remove-btn')) {
-//         e.preventDefault();
-//         const id = parseInt(removeBtn.parentElement.dataset.id);
-//         fetch('/books/book', {
-//             method: 'DELETE',
-//             headers: {
-//                 'Content-Type': 'application/json;charset=utf-8'
-//             },
-//             body: JSON.stringify({id})
-//         }).then(response => response.json())
-//         .then(({wasRemoved}) => {
-//             if (wasRemoved) {
-//                 removeBook(id);
-//             } else {
-//                 alert('Could not remove the book, sorry');
-//             }
-//         });
-//     }
-// });
+bookListEl.addEventListener('click', e => {
+    const removeBtn = e.target;
+    if (removeBtn.matches('.remove-btn')) {
+        e.preventDefault();
+        const id = parseInt(removeBtn.parentElement.dataset.id);
+        fetch('/books/book', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json;charset=utf-8'
+            },
+            body: JSON.stringify({id})
+        }).then(response => response.json())
+        .then(({wasRemoved}) => {
+            if (wasRemoved) {
+                removeBook(id);
+            } else {
+                alert('Could not remove the book, sorry');
+            }
+        });
+    }
+});
 
 // const formValidator = new FormValidator(
 //     document.querySelector('.book-edit')
@@ -61,167 +60,97 @@
 //     }
 // })();
 
-// (async function () {
-//     let subject = new Subject({
-//         name: 'hello',
-//         code: 'hi'
-//     });
-
-//     const startPipe = subject.pipe().throttle();
-
-//     const decode = startPipe.pipe().map(c => c.name === 'hello' ? 'greeting' : 'farewell');
-//     const codeUpper = startPipe;
-
-//     setTimeout(function() {
-//         subject.state = {
-//             name: 'goodbay',
-//             code: 'see you'
-//         };
-//         setTimeout(function() {
-//             subject.state = {
-//                 name: 'hello',
-//                 code: 'hi there'
-//             };
-//         }, 3000);
-//     }, 3000);
-
-    
-//     (async function() {
-//         for await (let {code} of codeUpper) {
-//             console.log(`code: ${code}`);
-//         }
-//     })();
-//     (async function() {
-//         for await (let type of decode) {
-//             console.log(`type: ${type}`);
-//         }
-//     })();
-
-//     // for await (let [type, upper] of decode.combineLatest(codeUpper)) {
-//     //     console.log(`type: ${type}, upper: ${upper}`);
-//     // }
-// })();
-
-let resolveRef = null;
-
-function waitTime(timeout = 1000) {
-    return new Promise(r => setTimeout(r, timeout));
-}
-
-function waitClick(good = true) {
-    return new Promise((resolve, reject) => {
-        resolveRef = good ? resolve : reject;
+(async function () {
+    let subject = new Subject({
+        name: 'hello',
+        code: 'hi'
     });
-}
 
-function createClickListener() {
-    let stop = false;
-    return {
-        [Symbol.asyncIterator]() {
-            return this;
-        },
-        next() {
-            if (stop) {
-                return Promise.resolve({done: true});
-            } else {
-                return waitClick().then(value => ({
-                    value,
-                    done: false
-                }));
-            }
-        },
-        throw(err) {
-            stop = true;
-            console.log('about to throw an error!');
-            throw err;
-        },
-        return(value) {
-            stop = true;
-            console.log('I am out of here.')
-            return Promise.resolve({done: true, value});
+    // const startPipe = subject.pipe().throttle();
+
+    // const decode = startPipe.map(c => c.name === 'hello' ? 'greeting' : 'farewell');
+    // const codeUpper = startPipe.map(c => c.code.toUpperCase());
+
+
+    (async function() {
+        // for await (let s of subject) {
+        //     console.log(`name: ${s.name}, code: ${s.code}`);
+        // }
+
+        const iterator = subject[Symbol.asyncIterator]();
+        let s = await iterator.next();
+        while (!s.done) {
+            console.log(`name: ${s.value.name}, code: ${s.value.code}`);
+            s = await iterator.next();
         }
-    };
-}
+    })();
 
-async function forEach(stream, onEachFn, onErrorFn) {
-    const iterator = stream[Symbol.asyncIterator]();
-    
-    let nextValue;
-    let index = 0;
-    try {
-        nextValue = await iterator.next();
-    } catch (err) {
-        onErrorFn(err);
-        return;
-    }
-    
-    while (!nextValue.done) {
-        let onEachResult;
-        try {
-            onEachResult = onEachFn(nextValue.value, index++);
-        } catch (err) {
-            await iterator.return();
-            throw err;
+    (async function() {
+        for (let i of [1,2,3,4,5,6,7,8,9,10]) {
+            const j = i;
+            queueMicrotask(() => {
+                subject.state = {
+                    name: 'Mia',
+                    code: j
+                };
+                console.log(`setting ${j}`);
+            });
         }
 
-        if (onEachResult !== undefined && !onEachResult) {
-            await iterator.return();
-            break;
-        }
+        // subject.state = {
+        //     name: 'Mia',
+        //     code: await Promise.resolve(2)
+        // };
+        // console.log(`setting 2`);
 
-        try {
-            nextValue = await iterator.next();
-        } catch (err) {
-            onErrorFn(err);
-            break;
-        }
-    }
-}
+        // subject.state = {
+        //     name: 'Mia',
+        //     code: await Promise.resolve(3)
+        // };
+        // console.log(`setting 3`);
 
-async function onAllocateClick() {
-    const stream = createClickListener();
+        // subject.state = {
+        //     name: 'Mia',
+        //     code: await Promise.resolve(4)
+        // };
+        // console.log(`setting 4`);
 
-    try {
-        await forEach(stream, (v, i) => {
-            console.log(`for each at ${i}: ${v}`);
-            if (i === 2) {
-                throw new Error('at index 2');
-            }
-        }, err => {
-            console.error(`on error: for each: ${err}`);
-        });
-    } catch (err) {
-        console.error(`catch: for each: ${err}`);
-    }
-
-    // try {
-    //     let i = 0;
-    //     for await (let v of stream) {
-    //         console.log(`for each at ${i}: ${v}`);
-    //         if (i++ === 1) {
-    //             throw new Error('at index 1');
-    //         }
+        // for await (let s of [1,2,3,4,5,6,7,8,9,10]) {
+        //     await Promise.resolve();
+        //     subject.state = {
+        //         name: 'Mia',
+        //         code: s
+        //     };
+        //     console.log(`setting ${s}`);
+        // }
+    })();
+    // (async function() {
+    //     for await (let type of decode) {
+    //         console.log(`type: ${type}`);
     //     }
-    // } catch (err) {
-    //     console.error(`for each: ${err}`);
+    // })();
+
+    // for await (let [type, upper] of decode.combineLatest(codeUpper)) {
+    //     console.log(`type: ${type}, upper: ${upper}`);
     // }
+})();
 
-    // console.log(stream.next());
-}
+// async function* generate() {
+//     yield 1;
+//     yield 2;
+//     yield 3;
+// }
 
-document.querySelector('#allocate').addEventListener('click', onAllocateClick);
-
-document.querySelector('#resolve').addEventListener('click', e => {
-    if (resolveRef) {
-        resolveRef('resolved alright');
-        resolveRef = null;
-    }
-});
-
-document.querySelector('#tearDown').addEventListener('click', e => {
-    const allocateEl = document.querySelector('#allocate');
-    if (allocateEl) {
-        allocateEl.removeEventListener('click', onAllocateClick);
-        allocateEl.remove();
-    }
-});
+// (async function () {
+//     let i = 1;
+//     const generator = generate();
+//     console.log('start');
+//     for await (let v of generator) {
+//         console.log(`value: ${v}`);
+//         const j = i++;
+//         setTimeout(() => {
+//             console.log(`index ${j}`);
+//         });
+//     }
+//     console.log('end');
+// })();

@@ -10,7 +10,7 @@ export class InputComponent {
     }
 
     bind({loading, error, pristine, name, label}) {
-        const inputInvalidClass = error.pipe().map(e => e ? 'invalid' : '').filter(c => name === 'code').tap(c => console.log(`${name}: ${c}`));
+        const inputInvalidClass = error.map(e => e ? 'invalid' : '');
         const controlPristineClass = pristine.pipe().map(t => t ? 'pristine' : 'dirty');
         
         const registerOnInput = (stream, el) => {
@@ -21,7 +21,7 @@ export class InputComponent {
         this._element = toDom`
             <div class="control ${controlPristineClass}">
                 <label>${label}</label>
-                <input required name="${name}" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
+                <input minlength="4" required name="${name}" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
                 <div class="error" *if=${error}>
                     <div class="triangle-left"></div>
                     <div class="message">${error}</div>

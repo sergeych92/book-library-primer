@@ -29,6 +29,7 @@ export async function* combineLatest(streamArr) {
     const valueArr = promiseArr.map((_, index) => ({value: undefined, done: false, init: false, index}));
 
     while (valueArr.some(v => !v.init)) {
+        // TODO: add a try-catch and call return() on all the other iterators when an iterator throws
         await nextValue(iteratorArr, promiseArr, valueArr, infinitePromise);
     }
     yield valueArr.map(v => v.value);

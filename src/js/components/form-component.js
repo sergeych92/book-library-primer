@@ -142,15 +142,7 @@ export class FormComponent {
             .switchMap(str => str
                 ? new GetJsonRequest(`/books/codeExists/${str}`)
                 : Promise.resolve({exists: false}))
-            .map(({exists}) => exists ? 'This book code already exists. Please choose a different one' : '')
-            .tap(_ => {
-                this._store.state = {
-                    code: {
-                        ...this._store.state.code,
-                        loading: false
-                    }
-                };
-            });
+            .map(({exists}) => exists ? 'This book code already exists. Please choose a different one' : '');
 
         const codeValid = this._codeComponent.inputChange
             .pipe()
@@ -163,14 +155,13 @@ export class FormComponent {
         let eventCount = 0;
         let pristine = true;
         for await (let error of errorStream) {
-            console.log('error: ' + error);
             if (++eventCount >= 2) {
                 pristine = false;
             }
 
             this._store.state = {
                 code: {
-                    ...this._store.state.code,
+                    loading: false,
                     pristine,
                     error
                 }
