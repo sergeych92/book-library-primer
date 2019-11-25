@@ -1,22 +1,6 @@
 import { StreamIterable } from "./stream-iterable";
 
 export class Subject {
-    get state() {
-        return this._state;
-    }
-
-    set state(s) {
-        if (typeof (s) !== 'object') {
-            throw new Error('state must be an object');
-        }
-
-        // queue an event and execute it in a special callback in the generator after all of the listeners are subscribed
-        this._stateQueue.push(s);
-        if (this._subscribersReady() && this._stateQueue.length === 1) {
-            this._processStateQueue();
-        }
-    }
-
     constructor(state) {
         this._state = state || {};
         this._resolves = [];
@@ -24,36 +8,74 @@ export class Subject {
         this._stateQueue = [];
     }
 
+    // s is a state or a map function prevState => nextState
+    setState(s) {
+        // queue an event and execute it in a special callback in the generator after all of the listeners are subscribed
+        this._stateQueue.push(s);
+        if (this._subscribersReady() && this._stateQueue.length === 1) {
+            this._processStateQueue();
+        }
+    }
+
     pipe() {
         return new StreamIterable(x => x, this);
     }
 
-    async *[Symbol.asyncIterator]() {
+    [Symbol.asyncIterator]() {
         this._subscribersNum++;
-        try {
-            while (true) {
-                const promise = new Promise(resolve => {
-                    this._resolves.push(resolve);
-                });
-                if (this._subscribersReady() && this._stateQueue.length > 0) {
-                    // publish a new event in a microtask to make it run after the last promise.then subscription
-                    this._processStateQueue();
+
+        const iterator = {
+            stopped: false,
+            [Symbol.asyncIterator]() {
+                return this;
+            },
+            next: async () => {
+                if (iterator.stopped) {
+                    return {done: true};
+                } else {
+                    const promise = new Promise(resolve => {
+                        this._resolves.push(resolve);
+                    });
+                    if (this._resolves.length > this._subscribersNum) {
+                        throw new Error('You should not request a new value until you have processed the previous one.')
+                    }
+                    if (this._subscribersReady() && this._stateQueue.length > 0) {
+                        // publish a new event in a microtask to make it run after the last promise.then subscription
+                        this._processStateQueue();
+                    }
+                    return {
+                        value: await promise,
+                        done: false
+                    };
                 }
-                yield await promise;
+            },
+            return: async (returnValue) => {
+                if (!iterator.stopped) {
+                    iterator.stopped = true;
+                    this._subscribersNum--;
+                    if (this._subscribersReady() && this._stateQueue.length > 0) {
+                        this._processStateQueue();
+                    }
+                }
+                return {done: true, value: returnValue};
             }
-        } finally {
-            this._subscribersNum--;
-        }
+        };
+
+        return iterator;
     }
 
     _processStateQueue() {
         queueMicrotask(() => {
             const oldestState = this._stateQueue.shift();
-            this._state = {
-                ...this._state,
-                ...oldestState
-            };
-
+            if (typeof oldestState === 'function') {
+                // if it's a mapper, then call it with the prevState as an argument
+                this._state = oldestState(this._state);
+            } else {
+                this._state = {
+                    ...this._state,
+                    ...oldestState
+                };
+            }
             this._resolveTo();
         });
     }

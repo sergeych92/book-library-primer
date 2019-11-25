@@ -62,22 +62,39 @@ bookListEl.addEventListener('click', e => {
 
 (async function () {
     let subject = new Subject({
-        name: 'hello',
-        code: 'hi'
+        name: 'Alexa',
+        code: 0
     });
 
     (async function() {
         for await (let s of subject) {
-            console.log(`name: ${s.name}, code: ${s.code}`);
+            console.log(`listener 1: name: ${s.name}, code: ${s.code}`);
         }
     })();
 
     (async function() {
-        for await (let s of [1,2,3,4,5,6,7,8,9,10]) {
-            subject.state = {
-                name: 'Mia',
-                code: s
-            };
+        let i = 0;
+        for await (let s of subject) {
+            console.log(`listener 2: name: ${s.name}, code: ${s.code}`);
+            if (++i === 2) {
+                console.log('listener 2 is out');
+                break;
+            }
+        }
+    })();
+
+    (async function() {
+        for await (let s of subject) {
+            console.log(`listener 3: name: ${s.name}, code: ${s.code}`);
+        }
+    })();
+
+    (async function() {
+        for (let s of [1,2,3,4,5]) {
+            subject.setState(({name, code}) => ({
+                name,
+                code: code + 1
+            }));
             console.log(`setting ${s}`);
         }
     })();
