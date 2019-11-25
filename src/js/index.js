@@ -67,75 +67,13 @@ bookListEl.addEventListener('click', e => {
     });
 
     (async function() {
-        let i = 0;
         for await (let s of subject) {
             console.log(`name: ${s.name}, code: ${s.code}`);
-            if (i++ === 1) {
-                break;
-            }
         }
-
-        // const iterator = subject[Symbol.asyncIterator]();
-        // let s = await iterator.next();
-        // while (!s.done) {
-        //     console.log(`name: ${s.value.name}, code: ${s.value.code}`);
-        //     s = await iterator.next();
-        // }
     })();
 
-    // subject.state = {name: 'Alice', code: 1};
-    // queueMicrotask(() => {
-    //     console.log('after resolve; in microtask');
-
-    //     subject.state = {name: 'Alice', code: 2};
-    //     queueMicrotask(() => {
-    //         console.log('after resolve; in microtask');
-
-    //         subject.state = {name: 'Alice', code: 3};
-
-    //         queueMicrotask(() => {
-    //             console.log('after resolve; in microtask');
-    //         });
-    //     });
-    // });
-
     (async function() {
-        // resolveRef(13);
-        // queueMicrotask(() => {
-        //     console.log('after resolve; in microtask');
-        // });
-
-        // for (let i of [1,2,3,4,5,6,7,8,9,10]) {
-        //     const j = i;
-        //     queueMicrotask(() => {
-        //         subject.state = {
-        //             name: 'Mia',
-        //             code: j
-        //         };
-        //         console.log(`setting ${j}`);
-        //     });
-        // }
-
-        // subject.state = {
-        //     name: 'Mia',
-        //     code: await Promise.resolve(2)
-        // };
-        // console.log(`setting 2`);
-
-        // subject.state = {
-        //     name: 'Mia',
-        //     code: await Promise.resolve(3)
-        // };
-        // console.log(`setting 3`);
-
-        // subject.state = {
-        //     name: 'Mia',
-        //     code: await Promise.resolve(4)
-        // };
-        // console.log(`setting 4`);
-
         for await (let s of [1,2,3,4,5,6,7,8,9,10]) {
-            await Promise.resolve();
             subject.state = {
                 name: 'Mia',
                 code: s
@@ -143,33 +81,4 @@ bookListEl.addEventListener('click', e => {
             console.log(`setting ${s}`);
         }
     })();
-    // (async function() {
-    //     for await (let type of decode) {
-    //         console.log(`type: ${type}`);
-    //     }
-    // })();
-
-    // for await (let [type, upper] of decode.combineLatest(codeUpper)) {
-    //     console.log(`type: ${type}, upper: ${upper}`);
-    // }
 })();
-
-// async function* generate() {
-//     yield 1;
-//     yield 2;
-//     yield 3;
-// }
-
-// (async function () {
-//     let i = 1;
-//     const generator = generate();
-//     console.log('start');
-//     for await (let v of generator) {
-//         console.log(`value: ${v}`);
-//         const j = i++;
-//         setTimeout(() => {
-//             console.log(`index ${j}`);
-//         });
-//     }
-//     console.log('end');
-// })();

@@ -10,21 +10,18 @@ export class Subject {
             throw new Error('state must be an object');
         }
 
-        this._state = {
-            ...this._state,
-            ...s
-        };
-
-        // queue an event and execute it in a special event generated in the generator
-
-        this._resolveTo(this._state);
+        // queue an event and execute it in a special callback in the generator after all of the listeners are subscribed
+        this._stateQueue.push(s);
+        if (this._subscribersReady() && this._stateQueue.length === 1) {
+            this._processStateQueue();
+        }
     }
 
     constructor(state) {
         this._state = state || {};
         this._resolves = [];
         this._subscribersNum = 0;
-        this._eventQueue = [];
+        this._stateQueue = [];
     }
 
     pipe() {
@@ -32,25 +29,37 @@ export class Subject {
     }
 
     async *[Symbol.asyncIterator]() {
-        console.log('subscribed');
         this._subscribersNum++;
         try {
             while (true) {
                 const promise = new Promise(resolve => {
                     this._resolves.push(resolve);
                 });
-                if (this._resolves.length === this._subscribersNum) {
-                    console.log('all subscribers should be good to go on a next event notification');
-                    queueMicrotask(() => {
-                        // publish a new event because it's after the promise.then subscription
-                    });
+                if (this._subscribersReady() && this._stateQueue.length > 0) {
+                    // publish a new event in a microtask to make it run after the last promise.then subscription
+                    this._processStateQueue();
                 }
                 yield await promise;
             }
         } finally {
-            console.log('unsubscribed');
             this._subscribersNum--;
         }
+    }
+
+    _processStateQueue() {
+        queueMicrotask(() => {
+            const oldestState = this._stateQueue.shift();
+            this._state = {
+                ...this._state,
+                ...oldestState
+            };
+
+            this._resolveTo();
+        });
+    }
+
+    _subscribersReady() {
+        return this._subscribersNum > 0 && this._resolves.length === this._subscribersNum;
     }
 
     _resolveTo() {
