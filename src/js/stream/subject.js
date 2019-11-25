@@ -15,12 +15,16 @@ export class Subject {
             ...s
         };
 
+        // queue an event and execute it in a special event generated in the generator
+
         this._resolveTo(this._state);
     }
 
     constructor(state) {
         this._state = state || {};
         this._resolves = [];
+        this._subscribersNum = 0;
+        this._eventQueue = [];
     }
 
     pipe() {
@@ -28,10 +32,24 @@ export class Subject {
     }
 
     async *[Symbol.asyncIterator]() {
-        while (true) {
-            yield await new Promise(resolve => {
-                this._resolves.push(resolve);
-            })
+        console.log('subscribed');
+        this._subscribersNum++;
+        try {
+            while (true) {
+                const promise = new Promise(resolve => {
+                    this._resolves.push(resolve);
+                });
+                if (this._resolves.length === this._subscribersNum) {
+                    console.log('all subscribers should be good to go on a next event notification');
+                    queueMicrotask(() => {
+                        // publish a new event because it's after the promise.then subscription
+                    });
+                }
+                yield await promise;
+            }
+        } finally {
+            console.log('unsubscribed');
+            this._subscribersNum--;
         }
     }
 
