@@ -1,7 +1,8 @@
-import { InputComponent } from "./input-component";
 import { Subject } from "../stream/subject";
 import { toDom } from "../dom-renderer/to-dom";
-import { GetJsonRequest } from "../get-json-request";
+import { NameComponent } from "./name-component";
+import { DescriptionComponent } from "./description-component";
+import { CodeComponent } from "./code-component";
 
 export class FormComponent {
     get element() {
@@ -13,16 +14,18 @@ export class FormComponent {
     }
 
     get formData() {
-        return new FormData(this._element.querySelector('form'));
+        return new FormData(this._formElement);
     }
 
     constructor() {
         this._store = new Subject(this._getDefaultState());
         this._formValidStream = this._store.pipe().map(s => !s.name.error && !s.description.error && !s.code.error);
+
         this._element = null;
-        this._nameComponent = new InputComponent();
-        this._descriptionComponent = new InputComponent();
-        this._codeComponent = new InputComponent();
+        this._formElement = null;
+        this._nameComponent = new NameComponent();
+        this._descriptionComponent = new DescriptionComponent();
+        this._codeComponent = new CodeComponent();
         this._submitStream = null;
     }
 
@@ -30,15 +33,6 @@ export class FormComponent {
         this._bindNameComponent();
         this._bindDescriptionComponent();
         this._bindCodeComponent();
-
-        const registerOnClick = e => {
-            e.preventDefault = true;
-            this._submitStream = e
-                .pipe()
-                .withLatestFrom(this._formValidStream)
-                .filter(([_, valid]) => valid)
-                .map(([submit]) => submit);
-        }
         const btnTypeStream = this._formValidStream.map(v => v ? 'add-btn' : 'cancel-btn');
 
         const children = new DocumentFragment();
@@ -49,13 +43,14 @@ export class FormComponent {
         );
         this._element = toDom`
             <div class="book book-edit">
-                <a class="commit-btn ${btnTypeStream}" href="#" (click)=${registerOnClick}></a>
+                <a class="commit-btn ${btnTypeStream}" href="#" (click)=${this._registerOnSubmitBtnClick.bind(this)}></a>
                 <form novalidate>
                     ${children}
                 </form>
             </div>`;
+        this._formElement = this._element.querySelector('form');
 
-        this._store.state = this._getDefaultState();
+        this._store.setState(this._getDefaultState());
 
         return {
             element: this._element,
@@ -64,7 +59,16 @@ export class FormComponent {
     }
 
     reset() {
-        this._store.state = this._getDefaultState();
+        this._store.setState(this._getDefaultState());
+    }
+
+    _registerOnSubmitBtnClick(stream) {
+        stream.preventDefault = true;
+        this._submitStream = stream
+            .pipe()
+            .withLatestFrom(this._formValidStream)
+            .filter(([_, valid]) => valid)
+            .map(([submit]) => submit);
     }
 
     async _bindNameComponent() {
@@ -72,23 +76,17 @@ export class FormComponent {
         this._nameComponent.bind({
             loading: false,
             error: nameStateStream.map(s => s.error),
-            pristine: nameStateStream.map(s => s.pristine),
-            name: 'name',
-            label: 'Name'
+            pristine: nameStateStream.map(s => s.pristine)
         });
-
-        const errorStream = this._nameComponent.inputChange
-            .pipe()
-            .map(e => e.checkValidity() ? '' : e.validationMessage);
 
         let eventCount = 0;
         let pristine = true;
-        for await (let error of errorStream) {
+        for await (let error of this._nameComponent.errorStream) {
             if (++eventCount >= 2) {
                 pristine = false;
             }
 
-            this._store.state = {name: {error, pristine}};
+            this._store.setState({name: {error, pristine}});
         }
     }
 
@@ -97,23 +95,17 @@ export class FormComponent {
         this._descriptionComponent.bind({
             loading: false,
             error: descriptionStateStream.map(s => s.error),
-            pristine: descriptionStateStream.map(s => s.pristine),
-            name: 'description',
-            label: 'Description'
+            pristine: descriptionStateStream.map(s => s.pristine)
         });
-
-        const errorStream = this._descriptionComponent.inputChange
-            .pipe()
-            .map(e => e.checkValidity() ? '' : e.validationMessage);
 
         let eventCount = 0;
         let pristine = true;
-        for await (let error of errorStream) {
+        for await (let error of this._descriptionComponent.errorStream) {
             if (++eventCount >= 2) {
                 pristine = false;
             }
 
-            this._store.state = {description: {error, pristine}};
+            this._store.setState({description: {error, pristine}});
         }
     }
 
@@ -123,49 +115,30 @@ export class FormComponent {
             loading: codeStateStream.map(s => s.loading),
             error: codeStateStream.map(s => s.error),
             pristine: codeStateStream.map(s => s.pristine),
-            name: 'code',
-            label: 'Code'
-        });
-
-        const codeExists = this._codeComponent.inputChange
-            .pipe()
-            .throttle(300)
-            .map(el => el.value)
-            .tap(_ => {
-                this._store.state = {
+            onLoadingStart: () => {
+                this._store.setState(prevState => ({
                     code: {
-                        ...this._store.state.code,
+                        ...prevState.code,
                         loading: true
                     }
-                };
-            })
-            .switchMap(str => str
-                ? new GetJsonRequest(`/books/codeExists/${str}`)
-                : Promise.resolve({exists: false}))
-            .map(({exists}) => exists ? 'This book code already exists. Please choose a different one' : '');
-
-        const codeValid = this._codeComponent.inputChange
-            .pipe()
-            .map(el => el.checkValidity() ? '' : el.validationMessage);
-
-        const errorStream = codeValid
-            .combineLatest(codeExists)
-            .map(([valid, exists]) => valid || exists);
+                }));
+            }
+        });
 
         let eventCount = 0;
         let pristine = true;
-        for await (let error of errorStream) {
+        for await (let error of this._codeComponent.errorStream) {
             if (++eventCount >= 2) {
                 pristine = false;
             }
 
-            this._store.state = {
+            this._store.setState({
                 code: {
                     loading: false,
                     pristine,
                     error
                 }
-            };
+            });
         }
     }
 

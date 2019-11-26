@@ -1,6 +1,5 @@
 import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
-import { FormValidator } from './form-validator';
 import { FormComponent } from './components/form-component';
 import { Subject } from './stream/subject';
 
@@ -28,74 +27,48 @@ bookListEl.addEventListener('click', e => {
     }
 });
 
-// const formValidator = new FormValidator(
-//     document.querySelector('.book-edit')
-// );
+(async function () {
+    const formComponent = new FormComponent();
+    formComponent.bind();
+    document.querySelector('.library').prepend(
+        formComponent.element
+    );
 
-// (async () => {
-//     for await (let _ of formValidator.submitStream) {
-//         const response = await fetch('/books/book', {
-//             method: 'POST',
-//             body: formValidator.formData
-//         }).then(response => response.json())
+    for await (let _ of formComponent.submitStream) {
+        const response = await fetch('/books/book', {
+            method: 'POST',
+            body: formComponent.formData
+        }).then(response => response.json())
         
-//         if (!response.error) {
-//             renderBook(response);
-//             formValidator.reset();
-//         } else {
-//             alert(`Couldn't add a book because ${response.error}`);
-//         }
-//     }
-// })();
+        if (!response.error) {
+            renderBook(response);
+            formComponent.reset();
+        } else {
+            alert(`Couldn't add a book because ${response.error}`);
+        }
+    }
+})();
 
 // (async function () {
-//     const formComponent = new FormComponent();
-//     formComponent.bind();
-//     document.querySelector('.library').prepend(
-//         formComponent.element
-//     );
+//     let subject = new Subject({
+//         name: 'Alexa',
+//         code: 0
+//     });
 
-//     for await (let click of formComponent.submitStream) {
-//         console.log(click);
-//     }
+//     (async function() {
+//         const mapped = subject.pipe().map(s => `name: ${s.name}, code: ${s.code}`);
+//         for await (let s of mapped) {
+//             console.log(`listener 1: ${s}`);
+//         }
+//     })();
+
+//     (async function() {
+//         for (let s of [1,2,3,4,5]) {
+//             subject.setState(({name, code}) => ({
+//                 name,
+//                 code: code + 1
+//             }));
+//             console.log(`setting ${s}`);
+//         }
+//     })();
 // })();
-
-(async function () {
-    let subject = new Subject({
-        name: 'Alexa',
-        code: 0
-    });
-
-    (async function() {
-        for await (let s of subject) {
-            console.log(`listener 1: name: ${s.name}, code: ${s.code}`);
-        }
-    })();
-
-    (async function() {
-        let i = 0;
-        for await (let s of subject) {
-            console.log(`listener 2: name: ${s.name}, code: ${s.code}`);
-            if (++i === 2) {
-                console.log('listener 2 is out');
-                break;
-            }
-        }
-    })();
-
-    (async function() {
-        for await (let s of subject) {
-            console.log(`listener 3: name: ${s.name}, code: ${s.code}`);
-        }
-    })();
-
-    (async function() {
-        for (let s of [1,2,3,4,5]) {
-            subject.setState(({name, code}) => ({
-                name,
-                code: code + 1
-            }));
-            console.log(`setting ${s}`);
-        }
-    })();
-})();

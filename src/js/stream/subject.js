@@ -69,7 +69,11 @@ export class Subject {
             const oldestState = this._stateQueue.shift();
             if (typeof oldestState === 'function') {
                 // if it's a mapper, then call it with the prevState as an argument
-                this._state = oldestState(this._state);
+                const mapper = oldestState;
+                this._state = {
+                    ...this._state,
+                    ...mapper(this._state)
+                };
             } else {
                 this._state = {
                     ...this._state,

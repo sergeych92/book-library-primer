@@ -1,27 +1,22 @@
 import { toDom } from "../dom-renderer/to-dom";
 
-export class InputComponent {
+export class DescriptionComponent {
     get element() { return this._element; }
-    get inputChange() { return this._inputChange; }
+    get errorStream() { return this._errorStream; }
 
     constructor() {
         this._element = null;
-        this._inputChange = null;
+        this._errorStream = null;
     }
 
-    bind({loading, error, pristine, name, label}) {
+    bind({loading, error, pristine}) {
         const inputInvalidClass = error.map(e => e ? 'invalid' : '');
         const controlPristineClass = pristine.pipe().map(t => t ? 'pristine' : 'dirty');
         
-        const registerOnInput = (stream, el) => {
-            stream.preventDefault = true;
-            this._inputChange = stream.pipe().map(e => e.target).startWith(el);
-        };
-
         this._element = toDom`
             <div class="control ${controlPristineClass}">
-                <label>${label}</label>
-                <input minlength="4" required name="${name}" class="input ${inputInvalidClass}" (input)=${registerOnInput}>
+                <label>Description</label>
+                <textarea required name="description" class="input description ${inputInvalidClass}" (input)=${this._registerOnInput.bind(this)}></textarea>
                 <div class="error" *if=${error}>
                     <div class="triangle-left"></div>
                     <div class="message">${error}</div>
@@ -31,7 +26,15 @@ export class InputComponent {
 
         return {
             element: this._element,
-            inputChange: this._inputChange
+            errorStream: this._errorStream
         };
+    }
+
+    _registerOnInput(stream, el) {
+        stream.preventDefault = true;
+        this._errorStream = stream.pipe()
+            .map(e => e.target)
+            .startWith(el)
+            .map(e => e.checkValidity() ? '' : e.validationMessage);
     }
 }
