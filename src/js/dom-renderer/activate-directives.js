@@ -1,5 +1,7 @@
 import { DIR_TYPE, getIdAttrCode, DIR_ID_ATTR_NAME } from "./constants";
 import { EventStream } from "../stream/event-stream";
+import { attachElementDirective } from "./attach-element-directive";
+import { attachIfDirective } from "./attach-if-directive";
 
 function attachOutputDirective(element, directive) {
     let outputStream = new EventStream({
@@ -14,41 +16,6 @@ async function attachAttrDirective(element, directive) {
     element.setAttribute(directive.attrName, directive.attrValueLeft + directive.attrValueRight);
     for await (let event of directive.variable) {
         element.setAttribute(directive.attrName, directive.attrValueLeft + event + directive.attrValueRight);
-    }
-}
-
-async function attachElementDirective(element, directive) {
-    if (directive.isNode) {
-        element.replaceWith(directive.variable);
-    } else {
-        for await (let event of directive.variable) {
-            element.textContent = event;
-        }
-    }
-}
-
-async function attachIfDirective(element, directive) {
-    if (directive.isObservable) {
-        let detachedEl = new Comment('if');
-        let attachedEl = element;
-        let swapEls = () => {
-            let buffer = attachedEl;
-            attachedEl = detachedEl;
-            detachedEl = buffer;
-        };
-        let shown = true;
-        for await (let event of directive.variable) {
-            const nextShown = !!event;
-            if (shown !== nextShown) {
-                attachedEl.replaceWith(detachedEl);
-                swapEls();
-                shown = nextShown;
-            }
-        }
-    } else {
-        if (!directive.variable) {
-            element.remove();
-        }
     }
 }
 

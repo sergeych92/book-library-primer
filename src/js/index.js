@@ -73,33 +73,6 @@ bookListEl.addEventListener('click', e => {
 //     })();
 // })();
 
-class BookComponent {
-    constructor() {
-        this._element = null;
-        this._clickStream = null;
-        this._id = null;
-    }
-
-    bind({name, description, code, id}) {
-        this._id = id;
-
-        this._element = toDom`
-            <li class="book">
-                <a class="remove-btn" href="#" (click)=${registerOnRemoveClick.bind(this)}></a>
-                <div>
-                    <div class="name">${name}</div>
-                    <div>${description}</div>
-                    <div>${code}</div>
-                </div>
-            </li>`;
-    }
-
-    registerOnRemoveClick(stream) {
-        stream.preventDefault = true;
-        this._clickStream = stream.map(_ => ({id: this._id}));
-    }
-}
-
 class BookListComponent {
     bind() {
         const bookList = [1,2,3];
@@ -118,10 +91,10 @@ class BookListComponent {
                     *onDelete=${onDelete}>
                 </virtual>
 
-                ${{type: 'text', variable: 'some text' }}
+                ${{directive: 'text', variable: 'some text' }}
 
                 ${{
-                    type: 'for',
+                    directive: 'for',
                     key: 'id',
                     variable: bookList,
                     component: BookList,

@@ -70,16 +70,18 @@ export function parseDirectives(strings, variables) {
             }
         } else if (match = (left.match(DIR_MATCHER.ELEMENT_MID_END) || right.match(DIR_MATCHER.ELEMENT_START))) {
             const isNode = variable instanceof Node;
+            const isDirective = !!(!isNode && !isObservable && variable && variable.directive);
             if (isNode && isObservable) {
                 throw new Error('Dom elements generated from observables are not supported.');
             }
-            if (isObservable || isNode) {
+            if (isObservable || isNode || isDirective) {
                 directives.push({
                     id,
                     variable,
                     type: DIR_TYPE.ELEMENT,
                     isObservable,
-                    isNode
+                    isNode,
+                    isDirective
                 });
                 return left + `<span ${getIdAttrCode(id++, false)}></span>` + right;
             } else {
