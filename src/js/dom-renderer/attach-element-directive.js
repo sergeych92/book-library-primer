@@ -1,3 +1,40 @@
+function updateArrayOfElement(anchorEl, prevArray, nextArray, directive) {
+    if (!Array.isArray(nextArray)) {
+        return [];
+    }
+    const enrichedNextArray = nextArray.map(data => ({
+        element: null,
+        keyValue: data[directive.key],
+        data
+    }));
+
+    //Remove items
+    const nextArrayMap = new Map(
+        enrichedNextArray.map(d => ([d.keyValue, d]))
+    );
+    for (let item of prevArray) {
+        if (!nextArrayMap.has(item.keyValue)) {
+            item.element.remove();
+        }
+    }
+
+    // Set isAdded to newly added items and link their elements
+    const prevArrayMap = new Map(
+        prevArray.map((d, i) => ([d.keyValue, {...d, index: i}]))
+    );
+    for (let item of enrichedNextArray) {
+        if (prevArrayMap.has(item.keyValue)) {
+            item.element = prevArrayMap.get(item.keyValue).element;
+        } else {
+            item.isAdded = true;
+        }
+    }
+
+    
+
+    return enrichedNextArray;
+}
+
 export async function attachElementDirective(element, directive) {
     if (directive.isNode) {
         element.replaceWith(directive.variable);
@@ -13,28 +50,18 @@ export async function attachElementDirective(element, directive) {
         }
     } else if (directive.isDirective) {
         if (directive.directive === 'for') {
-            const anchorReference = document.createComment('for-root');
-            element.replaceWith(anchorReference);
+            const anchorEl = document.createComment('for-root');
+            element.replaceWith(anchorEl);
             element = null;
-
-            /*
-            1
-            2
-            3
-            4
-
-            4
-            1
-            2
-            3
-            */
 
             let prevArray = [];
             for await (let nextArray of directive.variable) {
-                const diffResult = diffArrays(prevArray, nextArray, directive.key);
-                for (let row of diffResult.created) {
-
-                }
+                prevArray = updateArrayOfElement(
+                    anchorEl,
+                    prevArray,
+                    nextArray,
+                    directive
+                );
             }
         } else if (directive.directive === 'if') {
             throw new Error('An if element directive is not supported.');

@@ -74,6 +74,7 @@ export function parseDirectives(strings, variables) {
             if (isNode && isObservable) {
                 throw new Error('Dom elements generated from observables are not supported.');
             }
+            // TODO: validate that the given directive has all necessary parameters provided
             if (isObservable || isNode || isDirective) {
                 directives.push({
                     id,
