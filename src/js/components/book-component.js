@@ -1,3 +1,5 @@
+import { toDom } from "../dom-renderer/to-dom";
+
 export class BookComponent {
     get element() { return this._element; }
     get removeStream() { return this._removeStream; }
@@ -12,7 +14,7 @@ export class BookComponent {
         this._id = id;
 
         this._element = toDom`
-            <li data-id=${id} class="book">
+            <li class="book">
                 <a class="remove-btn" href="#" (click)=${this._registerOnRemoveClick.bind(this)}></a>
                 <div>
                     <div class="name">${name}</div>

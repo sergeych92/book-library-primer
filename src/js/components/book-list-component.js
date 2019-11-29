@@ -1,4 +1,5 @@
 import { BookComponent } from "./book-component";
+import { toDom } from "../dom-renderer/to-dom";
 
 export class BookListComponent {
     get element() { return this._element; }
@@ -19,9 +20,11 @@ export class BookListComponent {
                     component: BookComponent,
                     onCreate: component => {
                         // Add component to a list of forkJoin or something to react to its id change
+                        console.log('created');
                     },
                     onDelete: componet => {
                         // Remove the given component from the observable list
+                        console.log('deleted');
                     }
                 }}
             </ul>`;

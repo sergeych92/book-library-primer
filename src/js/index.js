@@ -2,35 +2,40 @@ import '../css/style.scss';
 import { loadRows, renderBook, removeBook, bookListEl, clearUpForm } from './booklist-renderer';
 import { FormComponent } from './components/form-component';
 import { Subject } from './stream/subject';
+import { BookListComponent } from './components/book-list-component';
 
-loadRows();
+// loadRows();
 
-bookListEl.addEventListener('click', e => {
-    const removeBtn = e.target;
-    if (removeBtn.matches('.remove-btn')) {
-        e.preventDefault();
-        const id = parseInt(removeBtn.parentElement.dataset.id);
-        fetch('/books/book', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json;charset=utf-8'
-            },
-            body: JSON.stringify({id})
-        }).then(response => response.json())
-        .then(({wasRemoved}) => {
-            if (wasRemoved) {
-                removeBook(id);
-            } else {
-                alert('Could not remove the book, sorry');
-            }
-        });
-    }
+// bookListEl.addEventListener('click', e => {
+//     const removeBtn = e.target;
+//     if (removeBtn.matches('.remove-btn')) {
+//         e.preventDefault();
+//         const id = parseInt(removeBtn.parentElement.dataset.id);
+//         fetch('/books/book', {
+//             method: 'DELETE',
+//             headers: {
+//                 'Content-Type': 'application/json;charset=utf-8'
+//             },
+//             body: JSON.stringify({id})
+//         }).then(response => response.json())
+//         .then(({wasRemoved}) => {
+//             if (wasRemoved) {
+//                 removeBook(id);
+//             } else {
+//                 alert('Could not remove the book, sorry');
+//             }
+//         });
+//     }
+// });
+
+const store = new Subject({
+    bookList: []
 });
 
 (async function () {
     const formComponent = new FormComponent();
     formComponent.bind();
-    document.querySelector('.library').prepend(
+    document.querySelector('.library').append(
         formComponent.element
     );
 
@@ -41,12 +46,31 @@ bookListEl.addEventListener('click', e => {
         }).then(response => response.json())
         
         if (!response.error) {
-            renderBook(response);
+            store.setState(prevState => ({
+                bookList: [...prevState.bookList, response]
+            }));
             formComponent.reset();
         } else {
             alert(`Couldn't add a book because ${response.error}`);
         }
     }
+})();
+
+(async function () {
+    const listComponent = new BookListComponent();
+    listComponent.bind({
+        bookList: store.pipe().map(s => s.bookList)
+    });
+    document.querySelector('.library').append(
+        listComponent.element
+    );
+
+    const serverBooks = await fetch('/books')
+        .then(r => r.json())
+        .then(({books}) => books);
+    store.setState({
+        bookList: serverBooks
+    });
 })();
 
 // (async function () {
@@ -73,38 +97,38 @@ bookListEl.addEventListener('click', e => {
 //     })();
 // })();
 
-class BookListComponent {
-    bind() {
-        const bookList = [1,2,3];
+// class BookListComponent {
+//     bind() {
+//         const bookList = [1,2,3];
 
-        const element = toDom`
-            <ul class="book-list">
-                <virtual *textContent=${'text'}></virtual>
+//         const element = toDom`
+//             <ul class="book-list">
+//                 <virtual *textContent=${'text'}></virtual>
                 
-                <!-- *textContent=${'some text'} -->
+//                 <!-- *textContent=${'some text'} -->
                 
-                <virtual
-                    *for=${bookList}
-                    *key="id"
-                    *component=${BookList}
-                    *onCreate=${onCreate}
-                    *onDelete=${onDelete}>
-                </virtual>
+//                 <virtual
+//                     *for=${bookList}
+//                     *key="id"
+//                     *component=${BookList}
+//                     *onCreate=${onCreate}
+//                     *onDelete=${onDelete}>
+//                 </virtual>
 
-                ${{directive: 'text', variable: 'some text' }}
+//                 ${{directive: 'text', variable: 'some text' }}
 
-                ${{
-                    directive: 'for',
-                    key: 'id',
-                    variable: bookList,
-                    component: BookList,
-                    onCreate: component => {
-                        // Add component to a list of forkJoin or something to react to its id change
-                    },
-                    onDelete: componet => {
-                        // Remove the given component from the observable list
-                    }
-                }}
-            </ul>`;
-    }
-}
+//                 ${{
+//                     directive: 'for',
+//                     key: 'id',
+//                     variable: bookList,
+//                     component: BookList,
+//                     onCreate: component => {
+//                         // Add component to a list of forkJoin or something to react to its id change
+//                     },
+//                     onDelete: componet => {
+//                         // Remove the given component from the observable list
+//                     }
+//                 }}
+//             </ul>`;
+//     }
+// }
